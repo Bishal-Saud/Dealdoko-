@@ -57,7 +57,7 @@ function Footer() {
                 </Link>
               </li>
               <li>
-                <Link to="/listings" className="text-slate-400 hover:text-white transition flex items-center gap-1 group">
+                <Link to="/" className="text-slate-400 hover:text-white transition flex items-center gap-1 group">
                   <span>Explore Products</span>
                   <ArrowUpRight size={14} className="opacity-0 group-hover:opacity-100 transition-all transform translate-y-0.5 group-hover:-translate-y-0 group-hover:translate-x-0.5" />
                 </Link>

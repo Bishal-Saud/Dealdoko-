@@ -279,10 +279,10 @@ function Header() {
           <span>Home</span>
         </Link>
 
-        <Link to="/listings" className="flex flex-col items-center gap-1 text-gray-400 hover:text-blue-600 text-[10px] transition">
+        {/* <Link to="/listings" className="flex flex-col items-center gap-1 text-gray-400 hover:text-blue-600 text-[10px] transition">
           <ShoppingBag size={20} />
           <span>Explore</span>
-        </Link>
+        </Link> */}
 
         <button onClick={handleOpenChat} className="flex flex-col items-center gap-1 text-gray-400 text-[10px] relative">
           <MessageSquare size={20} />
