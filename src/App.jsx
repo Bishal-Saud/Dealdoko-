@@ -1,7 +1,7 @@
 import React from 'react'
 import { Routes, Route } from 'react-router-dom'
 
-import HomePage from './Pages/Homepage'
+import HomePage from './Pages/Homepage.jsx'
 import ProfilePage from './Pages/ProfilePage'
 import VerificationPage from './Pages/VeificationPage'
 import UsersPage from './Pages/UsersPage'
