@@ -14,7 +14,6 @@ import {
   ChevronRightIcon,
   UserCheckIcon,
   Store,
-  ShoppingBag,
   MessageSquare,
 } from "lucide-react";
 import { supabase } from "../api/supabase.js";
@@ -27,9 +26,11 @@ function Header() {
   const [loading, setLoading] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
 
-  // LIVE DATABASE PROFILE STATES
+  // LIVE DATABASE PROFILE STATES (UPDATED TO CAPTURE DB CUSTOMIZATIONS)
   const [isVerifiedSeller, setIsVerifiedSeller] = useState(false);
   const [userLocation, setUserLocation] = useState("Invalid Location");
+  const [dbFullName, setDbFullName] = useState("");
+  const [dbAvatarUrl, setDbAvatarUrl] = useState("");
 
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [hasNewMessage, setHasNewMessage] = useState(false);
@@ -38,12 +39,12 @@ function Header() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  // Fetch profile records dynamically
+  // Fetch custom profile records dynamically from public.profiles table
   const fetchUserProfileData = async (userId) => {
     try {
       const { data, error } = await supabase
         .from("profiles")
-        .select("is_verified_seller, location")
+        .select("is_verified_seller, location, full_name, avatar_url")
         .eq("id", userId)
         .single();
 
@@ -51,6 +52,8 @@ function Header() {
       if (data) {
         setIsVerifiedSeller(!!data.is_verified_seller);
         setUserLocation(data.location ? data.location : "Invalid Location");
+        setDbFullName(data.full_name || "");
+        setDbAvatarUrl(data.avatar_url || "");
       }
     } catch (err) {
       console.error("Error fetching live profile metadata:", err.message);
@@ -77,6 +80,8 @@ function Header() {
       } else {
         setIsVerifiedSeller(false);
         setUserLocation("Invalid Location");
+        setDbFullName("");
+        setDbAvatarUrl("");
       }
     });
 
@@ -120,7 +125,6 @@ function Header() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          // Point this back to your production URL or window.location.origin for local environment testing
           redirectTo: window.location.origin, 
         },
       });
@@ -157,15 +161,17 @@ function Header() {
     setHasNewMessage(false);
   };
 
-  // Google populates full_name and avatar_url automatically into user_metadata
+  // 🔥 PRIORITIZE YOUR CUSTOM DATABASE RECORDS OVER METADATA FALLBACKS
   const userFullName =
+    dbFullName ||
     currentUser?.user_metadata?.full_name ||
     currentUser?.user_metadata?.name ||
     "Active User";
     
   const userAvatar =
+    dbAvatarUrl ||
     currentUser?.user_metadata?.avatar_url || 
-    "https://via.placeholder.com/150";
+    "https://api.dicebear.com/7.x/bottts/svg?seed=fallback";
 
   return (
     <div>
@@ -279,11 +285,6 @@ function Header() {
           <span>Home</span>
         </Link>
 
-        {/* <Link to="/listings" className="flex flex-col items-center gap-1 text-gray-400 hover:text-blue-600 text-[10px] transition">
-          <ShoppingBag size={20} />
-          <span>Explore</span>
-        </Link> */}
-
         <button onClick={handleOpenChat} className="flex flex-col items-center gap-1 text-gray-400 text-[10px] relative">
           <MessageSquare size={20} />
           {hasNewMessage && <span className="absolute top-0 right-1 flex h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" />}
@@ -320,7 +321,7 @@ function Header() {
               </button>
             </div>
 
-            <div className="p-6 border-b flex flex-col items-center text-center bg-linear-to-b from-gray-50 to-white">
+            <div className="p-6 border-b flex flex-col items-center text-center bg-gradient-to-b from-gray-50 to-white">
               <img src={userAvatar} alt="Profile Card" className="w-24 h-24 rounded-full border-4 border-white shadow-lg object-cover mb-3" />
               <h3 className="text-lg font-black text-gray-900">{userFullName}</h3>
               <p className="text-xs text-gray-400 font-medium truncate max-w-full">{currentUser?.email}</p>
@@ -379,7 +380,7 @@ function Header() {
         </div>
       )}
 
-      {/* AUTH MODAL (CLEANED UP FOR GOOGLE-ONLY AUTHENTICATION) */}
+      {/* AUTH MODAL */}
       {isAuthOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
           <div className="relative w-full max-w-sm bg-white rounded-3xl shadow-2xl p-6 md:p-8 text-center">
