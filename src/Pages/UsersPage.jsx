@@ -49,7 +49,7 @@ const fetchFilteredUsers = async () => {
         
         {/* Header Summary Metadata Block */}
         <div className="mb-6">
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight">Registered Platform Traders</h1>
+          <h1 className="text-2xl font-black text-slate-900 tracking-tight">Registered Platform Users</h1>
           <p className="text-sm text-slate-500 mt-1">
             {queryParam 
               ? `Showing match results for "${queryParam}" (${users.length} found)`
