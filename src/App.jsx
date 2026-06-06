@@ -1,17 +1,17 @@
 import React from 'react'
 import { Routes, Route } from 'react-router-dom'
 
-import HomePage from './Pages/Homepage'
-import ProfilePage from './Pages/ProfilePage'
-import VerificationPage from './Pages/VeificationPage'
-import UsersPage from './Pages/UsersPage'
-import RolePage from './Pages/RolePage'
-import SellerDashboardPage from './Pages/SellerDashboardPage'
-import ProtectedRoute from './components/ProtectedRoute'
-import ManageOrderPage from './Pages/ManageOrderPage'
-import TermsAndPolicyPage from './Pages/TermsAndPolicyPage'
-import AboutUsPage from './Pages/AboutUsPage'
-import SettingsPage from './Pages/SettingsPage'
+import HomePage from './Pages/HomePage.jsx'
+import ProfilePage from './Pages/ProfilePage.jsx'
+import VerificationPage from './Pages/VeificationPage.jsx'
+import UsersPage from './Pages/UsersPage.jsx'
+import RolePage from './Pages/RolePage.jsx'
+import SellerDashboardPage from './Pages/SellerDashboardPage.jsx'
+import ProtectedRoute from './components/ProtectedRoute.jsx'
+import ManageOrderPage from './Pages/ManageOrderPage.jsx'
+import TermsAndPolicyPage from './Pages/TermsAndPolicyPage.jsx'
+import AboutUsPage from './Pages/AboutUsPage.jsx'
+import SettingsPage from './Pages/SettingsPage.jsx'
 
 function App() {
   return (
