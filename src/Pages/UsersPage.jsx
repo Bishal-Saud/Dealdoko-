@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { supabase } from '../api/supabase.js';
 import { Search, MapPin, ShieldCheck, Star, ChevronRight, UserMinus } from 'lucide-react';
+import HomeLayout from '../Layouts/HomeLayout.jsx';
 
 function UsersPage() {
   const [searchParams] = useSearchParams();
@@ -15,7 +16,7 @@ function UsersPage() {
 
   useEffect(() => {
     fetchFilteredUsers();
-  }, [searchQuery, locationQuery]); // Triggers database query whenever search queries update
+  }, [searchQuery, locationQuery]); 
 
   const fetchFilteredUsers = async () => {
     try {
@@ -61,6 +62,9 @@ function UsersPage() {
   };
 
   return (
+    <HomeLayout>
+      
+    
     <div className="min-h-screen bg-slate-50 text-slate-900 py-8 px-4">
       <div className="max-w-4xl mx-auto">
         
@@ -159,6 +163,7 @@ function UsersPage() {
         )}
       </div>
     </div>
+    </HomeLayout>
   );
 }
 
