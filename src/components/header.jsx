@@ -26,7 +26,7 @@ function Header() {
   const [loading, setLoading] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
 
-  // LIVE DATABASE PROFILE STATES (UPDATED TO CAPTURE DB CUSTOMIZATIONS)
+  // LIVE DATABASE PROFILE STATES
   const [isVerifiedSeller, setIsVerifiedSeller] = useState(false);
   const [userLocation, setUserLocation] = useState("Invalid Location");
   const [dbFullName, setDbFullName] = useState("");
@@ -161,7 +161,34 @@ function Header() {
     setHasNewMessage(false);
   };
 
-  // 🔥 PRIORITIZE YOUR CUSTOM DATABASE RECORDS OVER METADATA FALLBACKS
+  // 🔍 MANAGED SEARCH ROUTER
+  const executeSearchRouting = () => {
+    const rawInput = searchQuery.trim();
+    if (!rawInput) return;
+
+    // Direct match filters for location prefixes: "loc:Kathmandu" or "location:Lalitpur"
+    const locationPrefixRegex = /^(loc|location):\s*(.*)/i;
+    const match = rawInput.match(locationPrefixRegex);
+
+    if (match) {
+      const extractedLocation = match[2].trim();
+      if (extractedLocation) {
+        navigate(`/users?location=${encodeURIComponent(extractedLocation)}`);
+      }
+    } else {
+      // Strips standard trailing @ symbols out safely
+      const formattedQuery = rawInput.replace(/^@/, "");
+      navigate(`/users?search=${encodeURIComponent(formattedQuery)}`);
+    }
+  };
+
+  // Quick helper to search explicitly by user's current profile location pinned label
+  const handleLocationBadgeClick = () => {
+    if (userLocation && userLocation !== "Invalid Location") {
+      navigate(`/users?location=${encodeURIComponent(userLocation)}`);
+    }
+  };
+
   const userFullName =
     dbFullName ||
     currentUser?.user_metadata?.full_name ||
@@ -183,9 +210,12 @@ function Header() {
           <div className="flex items-center justify-between">
             <div className="flex flex-col">
               <Link to="/" className="text-2xl font-black text-blue-600 tracking-tight">
-                Deal Doko
+                Tol Path
               </Link>
-              <div className="flex items-center gap-1 text-xs font-semibold text-gray-500 mt-0.5 cursor-pointer hover:text-blue-600 transition">
+              <div 
+                onClick={handleLocationBadgeClick}
+                className="flex items-center gap-1 text-xs font-semibold text-gray-500 mt-0.5 cursor-pointer hover:text-blue-600 transition"
+              >
                 <MapPin size={14} className={userLocation === "Invalid Location" ? "text-gray-400" : "text-blue-500"} />
                 <span className={userLocation === "Invalid Location" ? "text-gray-400 italic" : "text-gray-700 font-bold"}>
                   {userLocation}
@@ -207,20 +237,19 @@ function Header() {
             </div>
           </div>
 
-          {/* Search Bar */}
+          {/* Managed Search Bar Input Block */}
           <div className="relative flex-1 max-w-2xl mx-auto w-full">
             <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
               <Search size={18} />
             </span>
             <input
               type="text"
-              placeholder="Search users..."
+              placeholder="Search users or area (e.g. 'loc: Kathmandu')..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === "Enter" && searchQuery.trim() !== "") {
-                  const formattedQuery = searchQuery.trim().replace(/^@/, "");
-                  navigate(`/users?search=${encodeURIComponent(formattedQuery)}`);
+                if (e.key === "Enter") {
+                  executeSearchRouting();
                 }
               }}
               className="w-full pl-10 pr-4 py-2.5 bg-gray-100 border rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition"
@@ -391,7 +420,7 @@ function Header() {
               <X size={20} />
             </button>
             
-            <h2 className="text-2xl font-black text-gray-900 mb-2">Welcome to Deal Doko</h2>
+            <h2 className="text-2xl font-black text-gray-900 mb-2">Welcome to Tol Path</h2>
             <p className="text-sm text-gray-500 mb-6">Sign in or create your account instantly using your Google profile.</p>
 
             <button

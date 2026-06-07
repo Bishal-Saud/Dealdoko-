@@ -5,34 +5,40 @@ import { Search, MapPin, ShieldCheck, Star, ChevronRight, UserMinus } from 'luci
 
 function UsersPage() {
   const [searchParams] = useSearchParams();
-  const queryParam = searchParams.get('search') || '';
+  
+  // Extract parameters sent from the Header setup
+  const searchQuery = searchParams.get('search') || '';
+  const locationQuery = searchParams.get('location') || '';
   
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchFilteredUsers();
-  }, [queryParam]); // Re-runs whenever the search term in the URL updates
+  }, [searchQuery, locationQuery]); // Triggers database query whenever search queries update
 
-const fetchFilteredUsers = async () => {
+  const fetchFilteredUsers = async () => {
     try {
       setLoading(true);
       let dbQuery = supabase.from('profiles').select('*');
 
-      if (queryParam.trim() !== '') {
-        // 1. Clean the term (lowercase + trim space handles)
-        const cleanQuery = queryParam.trim().toLowerCase();
+      // 📍 CASE 1: Location-Specific Query Handling
+      if (locationQuery.trim() !== '') {
+        const cleanLocation = locationQuery.trim();
+        const matchString = `%${cleanLocation}%`;
         
-        // 2. Format wildcards explicitly before injecting into the string
+        // Target structural location column natively in profiles
+        dbQuery = dbQuery.ilike('location', matchString);
+      } 
+      // 🔍 CASE 2: Text/Handle Fallback Query Handling
+      else if (searchQuery.trim() !== '') {
+        const cleanQuery = searchQuery.trim();
         const matchString = `%${cleanQuery}%`;
         
-        // 3. CLEAN SYNTAX FIX: Notice how the wildcards are structured out securely
         dbQuery = dbQuery.or(`full_name.ilike.${matchString},username.ilike.${matchString}`);
-        console.log("data",dbQuery) 
       }
 
       const { data, error } = await dbQuery;
-      
       
       if (error) throw error;
       setUsers(data || []);
@@ -43,6 +49,17 @@ const fetchFilteredUsers = async () => {
     }
   };
 
+  // Determine subheader display text dynamically
+  const getSubheaderText = () => {
+    if (locationQuery) {
+      return `Showing teachers & users located in "${locationQuery}" (${users.length} found)`;
+    }
+    if (searchQuery) {
+      return `Showing match results for "${searchQuery}" (${users.length} found)`;
+    }
+    return "Discover and browse active peer-to-peer network users";
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 py-8 px-4">
       <div className="max-w-4xl mx-auto">
@@ -51,10 +68,7 @@ const fetchFilteredUsers = async () => {
         <div className="mb-6">
           <h1 className="text-2xl font-black text-slate-900 tracking-tight">Registered Platform Users</h1>
           <p className="text-sm text-slate-500 mt-1">
-            {queryParam 
-              ? `Showing match results for "${queryParam}" (${users.length} found)`
-              : "Discover and browse active peer-to-peer network users"
-            }
+            {getSubheaderText()}
           </p>
         </div>
 
@@ -71,7 +85,7 @@ const fetchFilteredUsers = async () => {
             </div>
             <h3 className="font-black text-slate-800 text-base">No Users Found</h3>
             <p className="text-xs text-slate-400 mt-1 max-w-xs">
-              We couldn't locate any accounts matching your search inputs. Try checking spellings or look up a different user handle.
+              We couldn't locate any accounts matching your search inputs. Try checking spellings or look up a different area.
             </p>
           </div>
         ) : (
@@ -86,7 +100,7 @@ const fetchFilteredUsers = async () => {
                 <div className="flex items-center gap-4">
                   <img 
                     src={profile.avatar_url || "https://api.dicebear.com/7.x/bottts/svg?seed=fallback"} 
-                    alt={profile.full_name} 
+                    alt={profile.full_name || "Profile"} 
                     className="w-14 h-14 rounded-full object-cover border border-slate-100 bg-slate-50"
                   />
                   <div>
@@ -95,7 +109,6 @@ const fetchFilteredUsers = async () => {
                         {profile.full_name || 'Anonymous User'}
                       </h3>
                       
-                      {/* NEW: Explicitly render username handle beside their display name */}
                       {profile.username && (
                         <span className="text-xs font-bold text-blue-600">
                           @{profile.username}
@@ -119,7 +132,12 @@ const fetchFilteredUsers = async () => {
                       <span>•</span>
                       <span>{profile.completion_rate || "0%"} Completion</span>
                       <span>•</span>
-                      <span className="flex items-center gap-0.5"><MapPin size={10}/> Nepal</span>
+                      
+                      {/* Dynamically display user location from database record fields */}
+                      <span className="flex items-center gap-0.5 text-slate-600 font-bold">
+                        <MapPin size={10} className="text-blue-500" /> 
+                        {profile.location || "Unknown Location"}
+                      </span>
                     </div>
                   </div>
                 </div>

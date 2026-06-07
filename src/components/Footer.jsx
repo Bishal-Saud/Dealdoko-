@@ -33,7 +33,7 @@ function Footer() {
           {/* Column 1: Brand Statement */}
           <div className="space-y-4">
             <h3 className="text-2xl font-black text-white tracking-tight">
-              Deal <span className="text-blue-500">Doko</span>
+              Tol <span className="text-blue-500">Path</span>
             </h3>
             <p className="text-sm text-slate-400 leading-relaxed font-medium">
               The premium destination for verified local trading, secure marketplace exchanges, and community connections.
@@ -146,7 +146,7 @@ function Footer() {
             Kanchanpur, Nepal • 2026
           </p>
           <p className="text-xs text-slate-500 font-medium">
-            &copy; {new Date().getFullYear()} Deal Doko. All rights reserved.
+            &copy; {new Date().getFullYear()} Tol Path. All rights reserved.
           </p>
         </div>
 
