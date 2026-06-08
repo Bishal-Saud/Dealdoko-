@@ -10,6 +10,7 @@ import {
 import ManageOrderPage from "./ManageOrderPage";
 import BuyerChat from "../components/BuyerChat.jsx";
 import ManageCourse from "../components/ManageCourse.jsx";
+import { Link } from "react-router-dom";
 
 function SellerDashboardPage() {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -20,14 +21,14 @@ function SellerDashboardPage() {
 
       {/* SIDEBAR */}
       <aside className="w-full md:w-64 bg-slate-900 text-white p-6 flex flex-col gap-6 shrink-0 shadow-lg">
-        <div>
+        <Link to ="/">
           <h2 className="text-xl font-black tracking-tight text-amber-400 flex items-center gap-2">
             Educator OS <Sparkles size={16} />
           </h2>
           <p className="text-[10px] uppercase font-black tracking-widest text-slate-400 mt-1">
             Tuition Desk Console
           </p>
-        </div>
+        </Link>
 
         <nav className="flex flex-row md:flex-col gap-2 w-full overflow-x-auto no-scrollbar md:overflow-visible">
           <button
