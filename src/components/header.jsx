@@ -164,30 +164,30 @@ function Header() {
   };
 
   // 🔍 MANAGED SEARCH ROUTER
-  const executeSearchRouting = () => {
-    const rawInput = searchQuery.trim();
-    if (!rawInput) return;
+ const executeSearchRouting = () => {
+  const rawInput = searchQuery.trim();
+  if (!rawInput) return;
 
-    // Direct match filters for location prefixes: "loc:Kathmandu" or "location:Lalitpur"
-    const locationPrefixRegex = /^(loc|location):\s*(.*)/i;
-    const match = rawInput.match(locationPrefixRegex);
+  // Only allow location search
+  const locationPrefixRegex = /^(loc|location):\s*(.*)/i;
+  const match = rawInput.match(locationPrefixRegex);
 
-    if (match) {
-      const extractedLocation = match[2].trim();
-      if (extractedLocation) {
-        navigate(`/users?location=${encodeURIComponent(extractedLocation)}`);
-      }
-    } else {
-      // Strips standard trailing @ symbols out safely
-      const formattedQuery = rawInput.replace(/^@/, "");
-      navigate(`/users?search=${encodeURIComponent(formattedQuery)}`);
+  if (match) {
+    const extractedLocation = match[2].trim();
+
+    if (extractedLocation) {
+      navigate(`/users?location=${encodeURIComponent(extractedLocation)}`);
     }
-  };
+  } else {
+    // If user does NOT use loc: format, still treat input as location only
+    navigate(`/users?location=${encodeURIComponent(rawInput)}`);
+  }
+};
 
   // Quick helper to search explicitly by user's current profile location pinned label
   const handleLocationBadgeClick = () => {
     if (userLocation && userLocation !== "Invalid Location") {
-      navigate(`/users?location=${encodeURIComponent(userLocation)}`);
+     navigate(`/users?location=${encodeURIComponent(rawInput)}`);
     }
   };
 
@@ -253,7 +253,7 @@ function Header() {
             </span>
             <input
               type="text"
-              placeholder="Search users or area (e.g. 'loc: Kathmandu')..."
+             placeholder="Search by location only (e.g. Kathmandu, Pokhara)"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => {
