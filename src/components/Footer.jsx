@@ -23,7 +23,7 @@ function Footer() {
             <h4 className="text-sm font-bold uppercase tracking-wider text-slate-400">Tutoring Services</h4>
             <ul className="space-y-2.5 text-sm font-semibold">
               <li><Link to="/users?type=tutor" className="text-slate-400 hover:text-white transition">Find Home Tutors Near You</Link></li>
-              <li><Link to="/" className="text-slate-400 hover:text-white transition">Search Subjects Nationwide</Link></li>
+              <li><Link to="/recent-queries" className="text-slate-400 hover:text-white transition">Recently Asked Questions</Link></li>
               <li><Link to="/role" className="text-slate-400 hover:text-white transition">Become a Tutor</Link></li>
             </ul>
           </nav>

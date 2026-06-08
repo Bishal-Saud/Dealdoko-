@@ -1,22 +1,34 @@
 import React from 'react';
 import { HelpCircle, Search, CheckCircle2, BookOpen, Clock, MapPin } from 'lucide-react';
-import { Helmet } from 'react-helmet'; // Recommended for SEO
+import { Helmet } from 'react-helmet-async'; // Recommended for SEO
 
 function AskedQuestionPage() {
-  const faqs = [
-    {
-      q: "How can I find the best home tutor near me in Nepal?",
-      a: "Finding a reliable home tutor is easy with Tolpath. Simply use our 'Neighborhood Directory' to filter verified educators by your location and subject requirements."
-    },
-    {
-      q: "Are the tutors on Tolpath verified?",
-      a: "Yes! We prioritize safety. All our registered tutors undergo a verification process to ensure they provide a secure and high-quality learning environment for your child."
-    },
-    {
-      q: "What subjects are available for home tuition?",
-      a: "Tolpath offers expert tutors for Mathematics, Science, English, Physics, Chemistry, Accountancy, and comprehensive support for primary-level schooling."
-    }
-  ];
+ const faqs = [
+  {
+    q: "How can I find the best home tutor near me in Nepal?",
+    a: "Finding a reliable home tutor is easy with Tolpath. Simply use our 'Neighborhood Directory' to filter verified educators by your location and subject requirements."
+  },
+  {
+    q: "How much does home tuition cost in Nepal?",
+    a: "The cost of home tuition in Nepal depends on the subject, tutor's experience, and the student's grade level. Generally, rates are negotiated directly with tutors on Tolpath, ensuring transparency and competitive pricing for quality education."
+  },
+  {
+    q: "Are the tutors on Tolpath verified?",
+    a: "Yes! We prioritize safety. All our registered tutors undergo a verification process to ensure they provide a secure and high-quality learning environment for your child."
+  },
+  {
+    q: "What subjects are available for home tuition?",
+    a: "Tolpath offers expert tutors for Mathematics, Science, English, Physics, Chemistry, Accountancy, and comprehensive support for primary-level schooling including SEE and +2 preparation."
+  },
+  {
+    q: "What are the benefits of home tuition compared to coaching centers?",
+    a: "Home tuition offers personalized 1-on-1 attention, a customized learning pace, and the convenience of learning from home. This helps students improve grades faster than in crowded classroom environments."
+  },
+  {
+    q: "How do I schedule a demo session with a tutor?",
+    a: "Once you browse our tutors and find a match, you can contact them directly through their profile page on Tolpath to discuss your needs and arrange a trial or demo session."
+  }
+];
 
   return (
     <div className="min-h-screen bg-slate-50 pt-10 pb-20">
@@ -61,7 +73,23 @@ function AskedQuestionPage() {
           </a>
         </div>
       </div>
+
+      <script type="application/ld+json">
+  {JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": faqs.map(item => ({
+      "@type": "Question",
+      "name": item.q,
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": item.a
+      }
+    }))
+  })}
+</script>
     </div>
+    
   );
 }
 
