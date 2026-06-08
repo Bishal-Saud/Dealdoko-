@@ -8,6 +8,7 @@ import {
   PhoneCall, Wallet, Percent, CheckCircle2
 } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
+import HomeLayout from '../Layouts/HomeLayout.jsx';
 
 function ProfilePage() {
   const { id } = useParams(); 
@@ -167,6 +168,9 @@ function ProfilePage() {
   const totalCompletedBatches = Math.floor(totalCompletedCycles);
 
   return (
+    <HomeLayout>
+
+   
     <div className="min-h-screen bg-slate-50 text-slate-900 pb-24 md:pb-12">
       <Toaster />
       <div className="h-40 w-full bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-900 shadow-inner" />
@@ -259,7 +263,7 @@ function ProfilePage() {
               </div>
             </div>
 
-            {lat && lon && (
+            {/* {lat && lon && (
               <div className="w-full mt-5 pt-4 border-t border-slate-100 text-left">
                 <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5 mb-2">
                   <Navigation size={12} className="text-blue-500" /> Operational Proximity
@@ -275,7 +279,7 @@ function ProfilePage() {
                   />
                 </div>
               </div>
-            )}
+            )} */}
           </div>
 
           {/* RIGHT PANEL: MAIN PROFILE METRICS AND TABS */}
@@ -467,6 +471,7 @@ function ProfilePage() {
         </div>
       </div>
     </div>
+     </HomeLayout>
   );
 }
 
