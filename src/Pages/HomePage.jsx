@@ -8,6 +8,9 @@ import SocialMedia from "../components/SocialMedia.jsx";
 import Warning from "../components/Warning.jsx";
 
 function HomePage() {
+
+
+  
   return (
     <HomeLayout>
       {/* SEO Meta Tags */}
@@ -34,25 +37,15 @@ function HomePage() {
         </section>
 
 
-
-        {/* TRUST SIGNALS (SEO: Google likes platforms that emphasize safety) */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="flex items-center gap-3 p-4 bg-emerald-50 rounded-xl border border-emerald-100 text-emerald-800 font-bold text-xs">
-            <CheckCircle2 size={20} /> Verified Academic Backgrounds
-          </div>
-          <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-xl border border-blue-100 text-blue-800 font-bold text-xs">
-            <ShieldCheck size={20} /> KYC & Safety Screened
-          </div>
-          <div className="flex items-center gap-3 p-4 bg-indigo-50 rounded-xl border border-indigo-100 text-indigo-800 font-bold text-xs">
-            <Users size={20} /> Nationwide Tutor Network
-          </div>
-        </div>
-
-        {/* GEOLOCATION TUTOR SEARCH SEGMENT */}
+  {/* GEOLOCATION TUTOR SEARCH SEGMENT */}
         <TolPath />
-        
-        {/* PRODUCTS DIRECTORY GRID */}
+      
+          {/* PRODUCTS DIRECTORY GRID */}
         <ListingProducts />
+
+      
+        
+      
         <SocialMedia/>
       </main>
     </HomeLayout>

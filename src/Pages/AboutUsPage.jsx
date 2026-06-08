@@ -15,6 +15,7 @@ import toast, { Toaster } from 'react-hot-toast';
 
 import ceo from '../assets/images/founder.jpg';
 import manager from '../assets/images/manager.jpeg';
+import productManager from '../assets/images/productManager.jpeg';
 import HomeLayout from '../Layouts/HomeLayout';
 import SocialMedia from '../components/SocialMedia';
 
@@ -40,7 +41,16 @@ function AboutUsPage() {
       image: manager, 
       phone: "+977 986-8736074",
       email: "bebikjoshi1@gmail.com"
-    }
+    },
+    {
+  name: "Bikash Dhami",
+  role: "Project Manager",
+  location: "Kanchanpur, Nepal",
+  bio: "Responsible for planning, executing, and delivering projects efficiently while coordinating between teams and ensuring timely completion of platform goals.",
+  image: productManager, 
+  phone: "+977 986-8813739",
+  email: "bikashdhami7350@gmail.com"
+}
   ];
 
   const handleEmailInitiation = (name, email) => {
