@@ -12,6 +12,7 @@ import ManageOrderPage from './Pages/ManageOrderPage.jsx'
 import TermsAndPolicyPage from './Pages/TermsAndPolicyPage.jsx'
 import AboutUsPage from './Pages/AboutUsPage.jsx'
 import SettingsPage from './Pages/SettingsPage.jsx'
+import AskedQuestionPage from './Pages/AskedQuestionPage.jsx'
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
         <Route path='/terms-and-policy' element={<TermsAndPolicyPage />} />
         <Route path='/aboutus' element={<AboutUsPage />} />
         <Route path='/settings' element={<SettingsPage />} />
+        <Route path='/recent-queries' element={<AskedQuestionPage />} />
 
         {/* Protected Merchant Console Routes */}
         <Route 

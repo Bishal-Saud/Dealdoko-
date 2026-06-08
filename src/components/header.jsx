@@ -21,6 +21,7 @@ import { supabase } from "../api/supabase.js";
 import toast, { Toaster } from "react-hot-toast";
 import { Link, useNavigate } from "react-router-dom";
 import LiveChatModel from "../model/LiveChatModel.jsx";
+import { Helmet } from "react-helmet-async";
 
 function Header() {
   const [isAuthOpen, setIsAuthOpen] = useState(false);
@@ -204,7 +205,14 @@ function Header() {
   return (
     <div>
       <Toaster />
-
+<Helmet>
+        <title>{`Home Tuition Near ${userLocation} | Find Verified Tutors | Tol Path`}</title>
+        <meta 
+          name="description" 
+          content={`Looking for home tuition near ${userLocation}? Find highly rated, verified home tutors on Tol Path. Book your private tutor for Math, Science, and more today.`} 
+        />
+        <meta name="keywords" content={`home tuition near ${userLocation}, private tutors ${userLocation}, home teachers, verified tutors, Tol Path, education Nepal`} />
+      </Helmet>
       {/* HEADER / NAVIGATION */}
       <header className="sticky top-0 z-40 bg-white border-b border-gray-100 px-4 py-3 md:py-4 shadow-sm">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center md:justify-between gap-3">

@@ -20,6 +20,7 @@ import toast, { Toaster } from "react-hot-toast";
 import ContactSellerPage from "../Pages/ContactSellerPage.jsx"; 
 import LiveChatModal from "../model/LiveChatModel.jsx";
 import { useNavigate } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 
 function ListingProducts() {
   const navigate = useNavigate();
@@ -122,7 +123,7 @@ const fetchTuitionDirectoryAndProfiles = async () => {
       setLoading(false);
     }
   };
-  
+
   useEffect(() => {
     fetchTuitionDirectoryAndProfiles();
   }, []);
@@ -165,6 +166,19 @@ const fetchTuitionDirectoryAndProfiles = async () => {
 
   return (
     <div className="space-y-10 pb-12">
+      <Helmet>
+      <title>
+        {userLocation 
+          ? `Verified Home Tuition Teachers in ${userLocation} | Tol Path` 
+          : "Find Verified Home Tutors Near You in Nepal | Tol Path"}
+      </title>
+      <meta 
+        name="description" 
+        content={userLocation 
+          ? `Find the best home tuition teachers in ${userLocation}. Verified educators for all subjects on Tol Path.` 
+          : "Connect with verified home tutors across Nepal. Personalized academic support and home tuition for all classes."} 
+      />
+    </Helmet>
       <Toaster />
       
       {/* LOCAL AREA PROFILE AND COURSES INTEGRATION BANNER */}
@@ -175,9 +189,11 @@ const fetchTuitionDirectoryAndProfiles = async () => {
               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs font-black uppercase tracking-wider mb-2">
                 <MapPin size={12} className="animate-bounce" /> Hub Proximity Tracker
               </span>
-              <h2 className="text-xl md:text-2xl font-black text-gray-900 tracking-tight">
-                Neighborhood Directory for <span className="text-blue-600">{userLocation}</span>
-              </h2>
+             <h1 className="text-xl md:text-2xl font-black text-gray-900 tracking-tight">
+  {userLocation 
+    ? `Home Tuition Teachers & Tutors in ${userLocation}` 
+    : "Find Verified Home Tuition Teachers Near You"}
+</h1>
             </div>
 
             {/* Sub-Section 1: Local Teachers Profiles */}

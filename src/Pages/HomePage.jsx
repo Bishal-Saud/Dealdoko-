@@ -1,41 +1,46 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
+import { Helmet } from "react-helmet-async"; 
 import HomeLayout from "../Layouts/HomeLayout";
-import toast, { Toaster } from "react-hot-toast";
 import ListingProducts from "../components/ListingProducts.jsx";
 import TolPath from "../components/TolPath.jsx";
-import { AlertCircle, Terminal } from "lucide-react";
+import { AlertCircle, Terminal, CheckCircle2, ShieldCheck, Users } from "lucide-react";
 
 function HomePage() {
   return (
     <HomeLayout>
-      <Toaster />
+      {/* SEO Meta Tags */}
+      <Helmet>
+        <title>Find Verified Home Tuition Teachers in Nepal | Tol Path</title>
+        <meta 
+          name="description" 
+          content="Connect with the best home tuition teachers across Nepal. Tol Path provides verified, expert tutors for all subjects. Find a tutor near you today for academic success." 
+        />
+        <meta name="keywords" content="home tuition Nepal, home tutor near me, find teachers Kanchanpur, academic support, verified tutors" />
+        <link rel="canonical" href="https://tolpath.com/" />
+      </Helmet>
 
-      {/* MAIN CONTENT AREA */}
       <main className="max-w-7xl mx-auto px-4 mt-4 md:mt-8 space-y-6 md:space-y-10">
         
-        {/* PREMIUM WARNING / TESTING BANNER */}
-        <div className="w-full bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/20 rounded-2xl p-4 flex items-start sm:items-center gap-3.5 shadow-xs backdrop-blur-xs relative overflow-hidden">
-          {/* Ambient background accent */}
-          <div className="absolute left-0 top-0 bottom-0 w-1 bg-amber-500 rounded-l-2xl" />
-          
-          <div className="p-2 bg-amber-500/10 text-amber-600 rounded-xl flex-shrink-0 animate-pulse">
-            <AlertCircle size={18} />
+        {/* H1 Tag: The most important SEO signal for Google */}
+        <section className="text-center py-8">
+          <h1 className="text-3xl md:text-5xl font-black text-slate-900 mb-4">
+            Expert <span className="text-blue-600">Home Tuition</span> in Nepal
+          </h1>
+          <p className="text-slate-600 max-w-2xl mx-auto font-medium">
+            Bridging the gap between students and verified academic mentors. Find qualified home tutors near your city for personalized learning and better grades.
+          </p>
+        </section>
+
+        {/* TRUST SIGNALS (SEO: Google likes platforms that emphasize safety) */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div className="flex items-center gap-3 p-4 bg-emerald-50 rounded-xl border border-emerald-100 text-emerald-800 font-bold text-xs">
+            <CheckCircle2 size={20} /> Verified Academic Backgrounds
           </div>
-          
-          <div className="flex-1 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-            <div>
-              <span className="text-[10px] font-black uppercase tracking-wider text-amber-700 bg-amber-500/10 px-2 py-0.5 rounded-md inline-block mb-1 sm:mb-0 sm:mr-2">
-                Beta Environment
-              </span>
-              <p className="text-xs text-slate-600 font-bold inline-block">
-                This platform is currently running strictly for testing purposes.
-              </p>
-            </div>
-            
-            <div className="flex items-center gap-1.5 text-[11px] font-black text-amber-700 self-start sm:self-auto">
-              <Terminal size={13} />
-              <span className="tracking-tight uppercase">Launching Soon</span>
-            </div>
+          <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-xl border border-blue-100 text-blue-800 font-bold text-xs">
+            <ShieldCheck size={20} /> KYC & Safety Screened
+          </div>
+          <div className="flex items-center gap-3 p-4 bg-indigo-50 rounded-xl border border-indigo-100 text-indigo-800 font-bold text-xs">
+            <Users size={20} /> Nationwide Tutor Network
           </div>
         </div>
 

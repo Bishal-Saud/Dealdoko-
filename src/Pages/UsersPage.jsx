@@ -3,6 +3,7 @@ import { useSearchParams, Link } from 'react-router-dom';
 import { supabase } from '../api/supabase.js';
 import { Search, MapPin, ShieldCheck, Star, ChevronRight, UserMinus } from 'lucide-react';
 import HomeLayout from '../Layouts/HomeLayout.jsx';
+import { Helmet } from 'react-helmet-async';
 
 function UsersPage() {
   const [searchParams] = useSearchParams();
@@ -63,8 +64,14 @@ function UsersPage() {
 
   return (
     <HomeLayout>
-      
-    
+      <Helmet>
+  <title>
+    {locationQuery 
+      ? `Best Home Tuition Teachers in ${locationQuery} | Tol Path` 
+      : "Find Professional Home Tuition Teachers | Tol Path"}
+  </title>
+  <meta name="description" content={`Browse and hire verified home tuition teachers. ${locationQuery ? `Find educators available in ${locationQuery}.` : "High-quality academic support for students across Nepal."}`} />
+</Helmet>
     <div className="min-h-screen bg-slate-50 text-slate-900 py-8 px-4">
       <div className="max-w-4xl mx-auto">
         
