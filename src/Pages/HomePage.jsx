@@ -5,6 +5,7 @@ import ListingProducts from "../components/ListingProducts.jsx";
 import TolPath from "../components/TolPath.jsx";
 import { AlertCircle, Terminal, CheckCircle2, ShieldCheck, Users } from "lucide-react";
 import SocialMedia from "../components/SocialMedia.jsx";
+import Warning from "../components/Warning.jsx";
 
 function HomePage() {
   return (
@@ -21,7 +22,7 @@ function HomePage() {
       </Helmet>
 
       <main className="max-w-7xl mx-auto px-4 mt-4 md:mt-8 space-y-6 md:space-y-10">
-        
+        <Warning/>
         {/* H1 Tag: The most important SEO signal for Google */}
         <section className="text-center py-8">
           <h1 className="text-3xl md:text-5xl font-black text-slate-900 mb-4">
