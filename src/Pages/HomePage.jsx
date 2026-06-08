@@ -4,6 +4,7 @@ import HomeLayout from "../Layouts/HomeLayout";
 import ListingProducts from "../components/ListingProducts.jsx";
 import TolPath from "../components/TolPath.jsx";
 import { AlertCircle, Terminal, CheckCircle2, ShieldCheck, Users } from "lucide-react";
+import SocialMedia from "../components/SocialMedia.jsx";
 
 function HomePage() {
   return (
@@ -31,6 +32,8 @@ function HomePage() {
           </p>
         </section>
 
+
+
         {/* TRUST SIGNALS (SEO: Google likes platforms that emphasize safety) */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <div className="flex items-center gap-3 p-4 bg-emerald-50 rounded-xl border border-emerald-100 text-emerald-800 font-bold text-xs">
@@ -49,6 +52,7 @@ function HomePage() {
         
         {/* PRODUCTS DIRECTORY GRID */}
         <ListingProducts />
+        <SocialMedia/>
       </main>
     </HomeLayout>
   );

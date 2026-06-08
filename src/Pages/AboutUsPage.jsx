@@ -16,8 +16,12 @@ import toast, { Toaster } from 'react-hot-toast';
 import ceo from '../assets/images/founder.jpg';
 import manager from '../assets/images/manager.jpeg';
 import HomeLayout from '../Layouts/HomeLayout';
+import SocialMedia from '../components/SocialMedia';
 
 function AboutUsPage() {
+
+
+
   const team = [
     {
       name: "Bishal Saud",
@@ -131,6 +135,8 @@ function AboutUsPage() {
         </div>
       </section>
 
+
+
       {/* 4. LEADERSHIP TEAM SECTION */}
       <section className="max-w-4xl mx-auto space-y-8">
         <div className="text-center">
@@ -197,7 +203,7 @@ function AboutUsPage() {
           ))}
         </div>
       </section>
-
+<SocialMedia/>
       {/* 5. COMMUNITY FOOTNOTE */}
       <div className="max-w-md mx-auto text-center border-t border-slate-200/60 pt-8">
         <p className="text-xs text-slate-400 font-bold flex items-center justify-center gap-1.5">
