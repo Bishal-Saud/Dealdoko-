@@ -383,7 +383,7 @@ function Header() {
               <Link to={isVerifiedSeller ? "/seller-dashboard" : "/role"} onClick={() => setIsSidebarOpen(false)} className="w-full flex items-center justify-between p-3 text-gray-700 hover:bg-blue-50/50 hover:text-blue-600 rounded-xl font-semibold transition group">
                 <div className="flex items-center gap-3">
                   <Store size={18} className={isVerifiedSeller ? "text-amber-500" : "text-gray-400"} />
-                  <span>{isVerifiedSeller ? "Teacher Dashboard" : "Become a Seller"}</span>
+                  <span>{isVerifiedSeller ? "Teacher Dashboard" : "Become a Teacher"}</span>
                 </div>
                 <ChevronRight size={16} />
               </Link>
