@@ -84,12 +84,12 @@ function ProfilePage() {
           is_verified_buyer: false,
           location: 'Not Specified'
         });
-        setTeacherCourses([]); // No courses for new unverified profile
+        setTeacherCourses([]); 
       }
       
     } catch (error) {
       console.error('Error fetching profile:', error.message);
-      toast.error('Could not parse backend account records.');
+  toast.error('Please log in to view your profile.');
     } finally {
       setLoading(false);
     }
