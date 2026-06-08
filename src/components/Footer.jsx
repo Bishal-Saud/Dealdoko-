@@ -102,7 +102,7 @@ function Footer() {
             <div className="space-y-2 text-sm font-medium text-slate-400">
               <div className="flex items-center gap-2">
                 <Mail size={16} className="text-blue-500" />
-                <a href="mailto:bishalbahadursaud@gmail.com" className="hover:text-white transition">dealdoko.official@gmail.com</a>
+                <a href="mailto:tolpath.official@gmail.com" className="hover:text-white transition">tolpath.official@gmail.com</a>
               </div>
               <div className="flex items-center gap-2">
                 <MapPin size={16} className="text-blue-500" />

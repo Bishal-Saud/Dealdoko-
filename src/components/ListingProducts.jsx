@@ -43,14 +43,47 @@ function ListingProducts() {
     "All Primary Subjects"
   ];
 
-  const fetchTuitionDirectoryAndProfiles = async () => {
+const fetchTuitionDirectoryAndProfiles = async () => {
     try {
       setLoading(true);
       
       const { data: { user } } = await supabase.auth.getUser();
       setCurrentUser(user);
 
-      let currentLoc = null;
+      // 1. Fetch Profiles first
+      const { data: profilesData, error: profilesError } = await supabase
+        .from("profiles")
+        .select("id, full_name, username, avatar_url, phone_number, location, is_verified_seller");
+
+      if (profilesError) throw profilesError;
+
+      // 2. Fetch all products
+      const { data: productsData, error: productsError } = await supabase
+        .from("products")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (productsError) throw productsError;
+
+      // 3. Filter products: Only keep those where the seller is verified
+      const verifiedProducts = productsData.filter(product => {
+        const tutor = profilesData.find(p => p.id === product.seller_id);
+        // Only return true if tutor exists AND is_verified_seller is true
+        return tutor && tutor.is_verified_seller === true;
+      });
+
+      // 4. Map profiles onto the filtered list
+      const combinedData = verifiedProducts.map(product => {
+        const matchingTutor = profilesData.find(p => p.id === product.seller_id);
+        return {
+          ...product,
+          tutor_profile: matchingTutor || null
+        };
+      });
+
+      setCourses(combinedData);
+
+      // --- Logic for Local Tutors ---
       if (user) {
         const { data: profileData } = await supabase
           .from("profiles")
@@ -59,60 +92,29 @@ function ListingProducts() {
           .single();
         
         if (profileData?.location) {
-          setUserLocation(profileData.location);
-          currentLoc = profileData.location;
+          const currentLoc = profileData.location;
+          setUserLocation(currentLoc);
+          const cleanLoc = currentLoc.toLowerCase().trim();
+
+          // Filter local tutors (ensuring they are verified)
+          const activeLocalTutors = profilesData.filter(profile => {
+            const locationMatch = profile.location && profile.location.toLowerCase().trim() === cleanLoc;
+            return locationMatch && profile.is_verified_seller === true;
+          }).map(tutor => {
+            // Use the already filtered verifiedProducts list
+            const tutorCourses = verifiedProducts.filter(p => p.seller_id === tutor.id);
+            const uniqueSubjects = [...new Set(tutorCourses.map(c => c.subject || c.category).filter(Boolean))];
+            return {
+              ...tutor,
+              active_subjects: uniqueSubjects,
+              total_courses: tutorCourses.length
+            };
+          });
+          
+          setLocalTutors(activeLocalTutors);
+          setLocalCourses(combinedData.filter(c => c.tutor_profile?.location?.toLowerCase().trim() === cleanLoc));
         }
       }
-
-      const { data: productsData, error: productsError } = await supabase
-        .from("products")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (productsError) throw productsError;
-
-      const { data: profilesData, error: profilesError } = await supabase
-        .from("profiles")
-        .select("id, full_name, username, avatar_url, phone_number, location, is_verified_seller");
-
-      if (profilesError) throw profilesError;
-
-      // Map profiles onto products directly
-      const combinedData = productsData.map(product => {
-        const matchingTutor = profilesData.find(p => p.id === product.seller_id);
-        return {
-          ...product,
-          tutor_profile: matchingTutor || null
-        };
-      });
-      setCourses(combinedData);
-
-      if (currentLoc) {
-        const cleanLoc = currentLoc.toLowerCase().trim();
-
-        // Filter out tutors running within target address range
-        const activeLocalTutors = profilesData.filter(profile => {
-          const locationMatch = profile.location && profile.location.toLowerCase().trim() === cleanLoc;
-          const isVerified = profile.is_verified_seller ?? true;
-          return locationMatch && isVerified;
-        }).map(tutor => {
-          const tutorCourses = productsData.filter(p => p.seller_id === tutor.id);
-          const uniqueSubjects = [...new Set(tutorCourses.map(c => c.subject || c.category).filter(Boolean))];
-          return {
-            ...tutor,
-            active_subjects: uniqueSubjects,
-            total_courses: tutorCourses.length
-          };
-        });
-        setLocalTutors(activeLocalTutors);
-
-        // Filter out specific course listings matching user environment profiles
-        const filteredLocalBatches = combinedData.filter(course => 
-          course.tutor_profile?.location && course.tutor_profile.location.toLowerCase().trim() === cleanLoc
-        );
-        setLocalCourses(filteredLocalBatches);
-      }
-
     } catch (err) {
       console.error("Error reading tuition directory stream:", err.message);
       toast.error("Failed to sync structural tutor course listings.");
@@ -120,7 +122,7 @@ function ListingProducts() {
       setLoading(false);
     }
   };
-
+  
   useEffect(() => {
     fetchTuitionDirectoryAndProfiles();
   }, []);

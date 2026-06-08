@@ -39,6 +39,7 @@ function ProfilePage() {
 
       setIsOwnProfile(sessionUser?.id === targetId);
 
+      // 1. Fetch Profile
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -49,12 +50,31 @@ function ProfilePage() {
 
       if (data) {
         setProfile(data);
+        
+        // 2. Only fetch courses IF is_verified_seller is true
+        if (data.is_verified_seller === true) {
+          const { data: coursesData, error: coursesError } = await supabase
+            .from('products')
+            .select('id, title, subject, timing, price, description, successful_deals, active_parents, completed_earnings, seller_id')
+            .eq('seller_id', targetId)
+            .order('created_at', { ascending: false });
+
+          if (!coursesError && coursesData) {
+            setTeacherCourses(coursesData);
+          }
+        } else {
+          // Explicitly clear/set to empty if not a verified seller
+          setTeacherCourses([]);
+        }
+
+        // Tab logic
         if (data.is_verified_seller) {
           setActiveTab('teaching');
         } else {
           setActiveTab('overview');
         }
       } else if (sessionUser && sessionUser.id === targetId) {
+        // Fallback for new users
         setProfile({
           full_name: sessionUser.user_metadata?.full_name || 'Anonymous User',
           email: sessionUser.email,
@@ -64,18 +84,9 @@ function ProfilePage() {
           is_verified_buyer: false,
           location: 'Not Specified'
         });
+        setTeacherCourses([]); // No courses for new unverified profile
       }
-
-      const { data: coursesData, error: coursesError } = await supabase
-        .from('products')
-        .select('id, title, subject, timing, price, description, successful_deals, active_parents, completed_earnings, seller_id')
-        .eq('seller_id', targetId)
-        .order('created_at', { ascending: false });
-
-      if (!coursesError && coursesData) {
-        setTeacherCourses(coursesData);
-      }
-
+      
     } catch (error) {
       console.error('Error fetching profile:', error.message);
       toast.error('Could not parse backend account records.');
@@ -305,12 +316,14 @@ function ProfilePage() {
 
             {/* Navigation Tabs */}
             <div className="bg-white rounded-2xl p-1.5 shadow-2xs border border-slate-100 flex gap-1">
-              <button 
-                onClick={() => setActiveTab('teaching')}
-                className={`flex-1 py-2 rounded-xl text-xs font-black transition ${activeTab === 'teaching' ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-500 hover:bg-slate-50'}`}
-              >
-                Academic Classes
-              </button>
+              {isVerifiedSeller && (
+  <button 
+    onClick={() => setActiveTab('teaching')}
+    className={`flex-1 py-2 rounded-xl text-xs font-black transition ${activeTab === 'teaching' ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-500 hover:bg-slate-50'}`}
+  >
+    Academic Classes
+  </button>
+)}
               <button 
                 onClick={() => setActiveTab('overview')}
                 className={`flex-1 py-2 rounded-xl text-xs font-black transition ${activeTab === 'overview' ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-500 hover:bg-slate-50'}`}

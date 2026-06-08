@@ -15,6 +15,7 @@ import {
   UserCheckIcon,
   Store,
   MessageSquare,
+  Users2,
 } from "lucide-react";
 import { supabase } from "../api/supabase.js";
 import toast, { Toaster } from "react-hot-toast";
@@ -325,6 +326,11 @@ function Header() {
           <span>Sell</span>
         </Link>
 
+                <Link to="/aboutus" className="flex flex-col items-center gap-1 text-gray-400 hover:text-blue-600 text-[10px] transition">
+          <Users2 size={20} />
+          <span>About Us</span>
+        </Link>
+
         {currentUser ? (
           <button onClick={() => setIsSidebarOpen(true)} className="flex flex-col items-center gap-1 text-gray-400 text-[10px]">
             <img src={userAvatar} alt="Profile" className="w-5 h-5 rounded-full object-cover border border-gray-200" />
@@ -358,12 +364,28 @@ function Header() {
 
             {/* Menu Items */}
             <div className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+                   <Link to="/profile" onClick={() => setIsSidebarOpen(false)} className="w-full flex items-center justify-between p-3 text-gray-700 hover:bg-blue-50/50 hover:text-blue-600 rounded-xl font-semibold transition group">
+                <div className="flex items-center gap-3">
+                  <UserCheckIcon size={18} className="text-gray-400" />
+                  <span>Profile</span>
+                </div>
+                <ChevronRightIcon size={16} />
+              </Link>
+
               <Link to={isVerifiedSeller ? "/seller-dashboard" : "/role"} onClick={() => setIsSidebarOpen(false)} className="w-full flex items-center justify-between p-3 text-gray-700 hover:bg-blue-50/50 hover:text-blue-600 rounded-xl font-semibold transition group">
                 <div className="flex items-center gap-3">
                   <Store size={18} className={isVerifiedSeller ? "text-amber-500" : "text-gray-400"} />
                   <span>{isVerifiedSeller ? "Teacher Dashboard" : "Become a Seller"}</span>
                 </div>
                 <ChevronRight size={16} />
+              </Link>
+
+                 <Link to="/verify" onClick={() => setIsSidebarOpen(false)} className="w-full flex items-center justify-between p-3 text-gray-700 hover:bg-amber-50/50 hover:text-amber-600 rounded-xl font-semibold transition group">
+                <div className="flex items-center gap-3">
+                  <ShieldCheck size={18} className="text-gray-400" />
+                  <span>Verify User</span>
+                </div>
+                <span className="text-[10px] font-bold bg-amber-100 text-amber-800 px-2 py-0.5 rounded-md">KYC</span>
               </Link>
 
               <button onClick={() => { setIsSidebarOpen(false); handleOpenChat(); }} className="w-full flex items-center justify-between p-3 text-gray-700 hover:bg-blue-50/50 hover:text-blue-600 rounded-xl font-semibold transition group text-left">
@@ -382,21 +404,8 @@ function Header() {
                 <ChevronRight size={16} />
               </Link>
 
-              <Link to="/profile" onClick={() => setIsSidebarOpen(false)} className="w-full flex items-center justify-between p-3 text-gray-700 hover:bg-blue-50/50 hover:text-blue-600 rounded-xl font-semibold transition group">
-                <div className="flex items-center gap-3">
-                  <UserCheckIcon size={18} className="text-gray-400" />
-                  <span>Profile</span>
-                </div>
-                <ChevronRightIcon size={16} />
-              </Link>
-
-              <Link to="/verify" onClick={() => setIsSidebarOpen(false)} className="w-full flex items-center justify-between p-3 text-gray-700 hover:bg-amber-50/50 hover:text-amber-600 rounded-xl font-semibold transition group">
-                <div className="flex items-center gap-3">
-                  <ShieldCheck size={18} className="text-gray-400" />
-                  <span>Verify User</span>
-                </div>
-                <span className="text-[10px] font-bold bg-amber-100 text-amber-800 px-2 py-0.5 rounded-md">KYC</span>
-              </Link>
+         
+           
             </div>
 
             <div className="p-4 border-t bg-gray-50">

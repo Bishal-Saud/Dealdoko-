@@ -201,17 +201,47 @@ function VerificationPage() {
           </div>
         )}
 
-        {kycStatus === 'verified' && (
-          <div className="p-8 text-center space-y-4">
-            <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto border border-blue-100">
-              <UserCheck size={32} />
-            </div>
-            <h3 className="text-lg font-black text-slate-900">Verified Marketplace Integrity</h3>
-            <p className="text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
-              Account status successfully cleared. You are verified as an authentic peer-to-peer operator. Buyers and sellers can securely execute face-to-face handovers with confidence.
-            </p>
-          </div>
-        )}
+      {kycStatus === 'verified' && (
+  <div className="p-10 text-center space-y-5 bg-gradient-to-b from-blue-50 to-white">
+    
+    {/* Success Icon */}
+    <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto border border-green-200 shadow-sm">
+      <CheckCircle2 size={40} />
+    </div>
+
+    {/* Main Message */}
+    <div>
+      <h2 className="text-2xl font-black text-slate-900">
+        🎉 Congratulations!
+      </h2>
+      <p className="text-blue-600 font-bold mt-1">
+        You are now a Verified Student
+      </p>
+    </div>
+
+    {/* Description */}
+    <p className="text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
+      Your identity and location have been successfully verified. You can now safely connect with tutors, access learning opportunities, and use all platform features without restrictions.
+    </p>
+
+    {/* Badge */}
+    <div className="inline-flex items-center gap-2 bg-green-100 text-green-700 px-4 py-2 rounded-full text-xs font-bold border border-green-200">
+      <UserCheck size={14} />
+      Verified Student Account
+    </div>
+
+    {/* Optional CTA */}
+    <div className="pt-4">
+      <button
+        onClick={() => window.location.href = "/settings"}
+        className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm rounded-xl shadow-md transition"
+      >
+        Go to Dashboard
+      </button>
+    </div>
+
+  </div>
+)}
 
         {/* SHOW FORM IF UNVERIFIED OR REJECTED */}
         {(kycStatus === 'unverified' || kycStatus === 'rejected') && (
