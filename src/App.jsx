@@ -13,6 +13,7 @@ import TermsAndPolicyPage from './Pages/TermsAndPolicyPage.jsx'
 import AboutUsPage from './Pages/AboutUsPage.jsx'
 import SettingsPage from './Pages/SettingsPage.jsx'
 import AskedQuestionPage from './Pages/AskedQuestionPage.jsx'
+import ContactSellerPage from './Pages/ContactSellerPage.jsx'
 
 function App() {
   return (
@@ -29,6 +30,7 @@ function App() {
         <Route path='/aboutus' element={<AboutUsPage />} />
         <Route path='/settings' element={<SettingsPage />} />
         <Route path='/recent-queries' element={<AskedQuestionPage />} />
+        <Route path='/book-tutor/:courseId' element={<ContactSellerPage />} />
 
         {/* Protected Merchant Console Routes */}
         <Route 

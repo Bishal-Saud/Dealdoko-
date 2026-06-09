@@ -310,59 +310,30 @@ function Header() {
 
 
 
-  // 🔍 MANAGED SEARCH ROUTER
-
  const executeSearchRouting = () => {
-
   const rawInput = searchQuery.trim();
-
   if (!rawInput) return;
 
-
-
-  // Only allow location search
-
   const locationPrefixRegex = /^(loc|location):\s*(.*)/i;
-
   const match = rawInput.match(locationPrefixRegex);
 
-
-
   if (match) {
-
     const extractedLocation = match[2].trim();
-
-
-
     if (extractedLocation) {
-
       navigate(`/users?location=${encodeURIComponent(extractedLocation)}`);
-
     }
-
   } else {
-
-    // If user does NOT use loc: format, still treat input as location only
-
     navigate(`/users?location=${encodeURIComponent(rawInput)}`);
-
   }
-
 };
 
-
-
-  // Quick helper to search explicitly by user's current profile location pinned label
-
-  const handleLocationBadgeClick = () => {
-
-    if (userLocation && userLocation !== "Invalid Location") {
-
-     navigate(`/users?location=${encodeURIComponent(rawInput)}`);
-
-    }
-
-  };
+// FIX: Update this helper to use the userLocation state directly
+const handleLocationBadgeClick = () => {
+  if (userLocation && userLocation !== "Invalid Location") {
+    // We use the state 'userLocation' instead of 'rawInput'
+    navigate(`/users?location=${encodeURIComponent(userLocation)}`);
+  }
+};
 
 
 

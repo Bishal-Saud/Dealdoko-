@@ -1,10 +1,16 @@
 import React, { useState, useEffect } from "react";
-import { ArrowLeft, MapPin, GraduationCap, CheckCircle2, PhoneCall, Calendar, ShieldCheck, Clock, MessageSquare, Star, MessageCircle } from "lucide-react";
+import { useParams, useNavigate } from "react-router-dom";
+import { ArrowLeft, MapPin, GraduationCap, CheckCircle2, PhoneCall, Calendar, ShieldCheck, Clock, MessageSquare, Star, MessageCircle, Loader2 } from "lucide-react";
 import { supabase } from "../api/supabase.js";
 import LiveChatModal from "../model/LiveChatModel.jsx";
 import toast, { Toaster } from "react-hot-toast";
 
-function ContactSellerPage({ product, onBack }) {
+function ContactSellerPage() {
+  const { courseId } = useParams(); // Safely extract UUID from /book-tutor/:courseId
+  const navigate = useNavigate();
+
+  const [product, setProduct] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
   const [chatActive, setChatActive] = useState(false);
@@ -24,12 +30,41 @@ function ContactSellerPage({ product, onBack }) {
   const fallbackImage =
     "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=500&auto=format&fit=crop&q=60";
 
+  // 1. Core Data Fetching Pipeline
   useEffect(() => {
-    fetchSessionAndReviewStatus();
-    fetchPublicReviews();
-  }, [product.id]);
+    const fetchProductDetails = async () => {
+      try {
+        setLoading(true);
+        
+        // Fetch product listing and join its tutor/seller profile row dynamically
+        const { data, error } = await supabase
+          .from("products")
+          .select("*, tutor_profile:profiles(*)")
+          .eq("id", courseId)
+          .single();
 
-  const fetchSessionAndReviewStatus = async () => {
+        if (error) throw error;
+        setProduct(data);
+
+        // Fetch dependent rows only once we have a valid product configuration
+        if (data) {
+          fetchSessionAndReviewStatus(data.id);
+          fetchPublicReviews(data.seller_id || data.user_id);
+        }
+      } catch (err) {
+        console.error("Error fetching course details:", err.message);
+        toast.error("Failed to load course details.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (courseId) {
+      fetchProductDetails();
+    }
+  }, [courseId]);
+
+  const fetchSessionAndReviewStatus = async (productId) => {
     try {
       const { data: { user: authUser } } = await supabase.auth.getUser();
       if (!authUser) return;
@@ -47,7 +82,7 @@ function ContactSellerPage({ product, onBack }) {
       const { data: existingReview } = await supabase
         .from("reviews")
         .select("id, rating_score, comment_text")
-        .eq("product_id", product.id)
+        .eq("product_id", productId)
         .eq("buyer_id", authUser.id);
 
       if (existingReview && existingReview.length > 0) {
@@ -60,7 +95,8 @@ function ContactSellerPage({ product, onBack }) {
     }
   };
 
-  const fetchPublicReviews = async () => {
+  const fetchPublicReviews = async (sellerId) => {
+    if (!sellerId) return;
     try {
       setLoadingReviews(true);
       const { data, error } = await supabase
@@ -72,7 +108,7 @@ function ContactSellerPage({ product, onBack }) {
           created_at,
           profiles:buyer_id ( full_name, is_verified_buyer )
         `)
-        .eq("seller_id", product.seller_id)
+        .eq("seller_id", sellerId)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -85,7 +121,9 @@ function ContactSellerPage({ product, onBack }) {
   };
 
   const handleStartChat = async () => {
-    if (initializingChat) return;
+    if (initializingChat || !product) return;
+    const sellerId = product.seller_id || product.user_id;
+
     try {
       setInitializingChat(true);
       const { data: { user: currentUser } } = await supabase.auth.getUser();
@@ -95,7 +133,7 @@ function ContactSellerPage({ product, onBack }) {
       }
       setUser(currentUser);
 
-      if (currentUser.id === product.seller_id) {
+      if (currentUser.id === sellerId) {
         toast.error("This is your own course listing.");
         return;
       }
@@ -105,7 +143,7 @@ function ContactSellerPage({ product, onBack }) {
         .select("id")
         .eq("product_id", product.id)
         .eq("buyer_id", currentUser.id)
-        .eq("seller_id", product.seller_id);
+        .eq("seller_id", sellerId);
 
       if (fetchError) throw fetchError;
 
@@ -114,7 +152,7 @@ function ContactSellerPage({ product, onBack }) {
       } else {
         const { error: createError } = await supabase
           .from("chat_rooms")
-          .insert([{ product_id: product.id, buyer_id: currentUser.id, seller_id: product.seller_id }]);
+          .insert([{ product_id: product.id, buyer_id: currentUser.id, seller_id: sellerId }]);
 
         if (createError) throw createError;
         toast.success("Tuition conversation stream initialized!");
@@ -130,17 +168,19 @@ function ContactSellerPage({ product, onBack }) {
 
   const submitEducatorReview = async (e) => {
     e.preventDefault();
-    if (!user || !userProfile) {
+    if (!user || !userProfile || !product) {
       toast.error("Authentication credentials required.");
       return;
     }
+
+    const sellerId = product.seller_id || product.user_id;
 
     if (!userProfile.is_verified_buyer) {
       toast.error("Access Denied: Only Verified Buyers are authorized to rate educators.");
       return;
     }
 
-    if (user.id === product.seller_id) {
+    if (user.id === sellerId) {
       toast.error("Operation canceled: Educators cannot rate their own profiles.");
       return;
     }
@@ -153,7 +193,7 @@ function ContactSellerPage({ product, onBack }) {
           {
             product_id: product.id,
             buyer_id: user.id,
-            seller_id: product.seller_id,
+            seller_id: sellerId,
             rating_score: selectedRating,
             comment_text: reviewComment.trim()
           }
@@ -170,7 +210,7 @@ function ContactSellerPage({ product, onBack }) {
 
       toast.success("Rating submitted successfully!");
       setHasAlreadyReviewed(true);
-      fetchPublicReviews(); 
+      fetchPublicReviews(sellerId); 
     } catch (err) {
       console.error("Review Pipeline Error:", err.message);
       toast.error("Failed to save rating entry.");
@@ -180,20 +220,49 @@ function ContactSellerPage({ product, onBack }) {
   };
 
   const initiateDirectCall = () => {
-    if (product.seller_phone) {
-      window.open(`tel:${product.seller_phone}`, "_self");
+    const phoneNumber = product?.seller_phone || product?.tutor_profile?.phone_number;
+    if (phoneNumber) {
+      window.open(`tel:${phoneNumber}`, "_self");
     } else {
       toast.success("No active telephone link. Initializing secure message routing...");
       handleStartChat();
     }
   };
 
+  // 2. Loading State guard matching your style
+  if (loading) {
+    return (
+      <div className="min-h-screen flex justify-center items-center bg-slate-50">
+        <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+      </div>
+    );
+  }
+
+  // 3. Fallback Route checking
+  if (!product) {
+    return (
+      <div className="min-h-screen flex flex-col justify-center items-center bg-slate-50 p-4">
+        <p className="text-gray-600 font-bold mb-4">Course details could not be found.</p>
+        <button
+          onClick={() => navigate(-1)}
+          className="px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold flex items-center gap-2"
+        >
+          <ArrowLeft size={14} /> Go Back
+        </button>
+      </div>
+    );
+  }
+
+  // Safely extract names from unified schema properties
+  const sellerName = product.seller_name || product.tutor_profile?.full_name || "Verified Tutor";
+  const sellerLocation = product.location || product.tutor_profile?.location_name || "Nepal";
+
   return (
     <div className="max-w-5xl mx-auto px-2 py-4 animate-in fade-in duration-200">
       <Toaster />
       
       <button
-        onClick={onBack}
+        onClick={() => navigate(-1)}
         className="flex items-center gap-2 text-xs md:text-sm font-bold text-gray-600 hover:text-blue-600 transition mb-6 group cursor-pointer"
       >
         <ArrowLeft size={16} className="group-hover:-translate-x-0.5 transition-transform" />
@@ -202,7 +271,7 @@ function ContactSellerPage({ product, onBack }) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-10 bg-white border border-gray-100 rounded-3xl p-4 md:p-6 shadow-xs">
         
-        {/* Left Aspect Presentation Surface */}
+        {/* Left Column Aspect Presentation */}
         <div className="w-full space-y-6">
           <div className="w-full aspect-square bg-gray-50 rounded-2xl overflow-hidden border border-gray-50">
             <img
@@ -267,7 +336,7 @@ function ContactSellerPage({ product, onBack }) {
           </div>
         </div>
 
-        {/* Right Aspect Presentation Surface */}
+        {/* Right Column Aspect Presentation */}
         <div className="flex flex-col justify-between space-y-6">
           <div className="space-y-4">
             <div className="flex flex-wrap items-center gap-2">
@@ -291,7 +360,7 @@ function ContactSellerPage({ product, onBack }) {
               
               <div className="flex items-center gap-1 bg-gray-50 text-gray-600 text-xs font-bold px-2.5 py-1 rounded-md border border-gray-100">
                 <MapPin size={13} className="text-gray-400 shrink-0" />
-                <span>{product.location || "Nepal"}</span>
+                <span>{sellerLocation}</span>
               </div>
             </div>
 
@@ -306,7 +375,7 @@ function ContactSellerPage({ product, onBack }) {
 
             <hr className="border-gray-100" />
 
-            {/* Merchant Identification Block */}
+            {/* Educator Identity Summary Row */}
             <div className="bg-gray-50/70 p-3.5 rounded-xl border border-gray-100/50 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-amber-100 text-amber-700 font-black rounded-xl flex items-center justify-center text-sm shadow-xs border border-amber-200/20">
@@ -315,7 +384,7 @@ function ContactSellerPage({ product, onBack }) {
                 <div>
                   <div className="text-xs font-medium text-gray-400">Verified Independent Educator</div>
                   <div className="text-sm font-black text-gray-800 flex items-center gap-1.5">
-                    {product.seller_name || "Verified Tutor"}
+                    {sellerName}
                     <CheckCircle2 size={13} className="text-emerald-500 fill-emerald-500/10 shrink-0" strokeWidth={3} />
                   </div>
                 </div>
@@ -336,7 +405,7 @@ function ContactSellerPage({ product, onBack }) {
             </div>
           </div>
 
-          {/* Contact Routing and Evaluation Module */}
+          {/* Practical Actions Module */}
           <div className="space-y-3 pt-4 border-t border-gray-100">
             <button
               onClick={initiateDirectCall}
@@ -363,7 +432,7 @@ function ContactSellerPage({ product, onBack }) {
               </h3>
 
               {userProfile?.is_verified_buyer ? (
-                user?.id === product.seller_id ? (
+                user?.id === (product.seller_id || product.user_id) ? (
                   <p className="text-xs font-semibold text-slate-400 italic bg-slate-50 p-3 rounded-xl text-center">
                     You cannot submit rating parameters on your own listing profile.
                   </p>
@@ -451,7 +520,7 @@ function ContactSellerPage({ product, onBack }) {
       {chatActive && product && user && (
         <LiveChatModal 
           productId={product.id}
-          sellerId={product.seller_id}
+          sellerId={product.seller_id || product.user_id}
           buyerId={user.id} 
           onClose={() => setChatActive(false)}
         />

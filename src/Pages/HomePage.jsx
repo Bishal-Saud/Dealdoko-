@@ -7,10 +7,19 @@ import { AlertCircle, Terminal, CheckCircle2, ShieldCheck, Users } from "lucide-
 import SocialMedia from "../components/SocialMedia.jsx";
 import Warning from "../components/Warning.jsx";
 
+import { useAuth } from "../context/AuthProvider.jsx"; 
+import LocationModal from "../model/LocationModel.jsx"; 
+
 function HomePage() {
-
-
-  
+ 
+  const { user,loading } = useAuth();
+if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
   return (
     <HomeLayout>
       {/* SEO Meta Tags */}
@@ -24,8 +33,15 @@ function HomePage() {
         <link rel="canonical" href="https://tolpath.com/" />
       </Helmet>
 
+      {/* 3. Mount the Location Modal here. 
+        It returns null if closed or if user is already configured, 
+        so it won't interrupt your layout design!
+      */}
+      <LocationModal user={user} />
+
       <main className="max-w-7xl mx-auto px-4 mt-4 md:mt-8 space-y-6 md:space-y-10">
         <Warning/>
+        
         {/* H1 Tag: The most important SEO signal for Google */}
         <section className="text-center py-8">
           <h1 className="text-3xl md:text-5xl font-black text-slate-900 mb-4">
@@ -36,16 +52,12 @@ function HomePage() {
           </p>
         </section>
 
-
-  {/* GEOLOCATION TUTOR SEARCH SEGMENT */}
+        {/* GEOLOCATION TUTOR SEARCH SEGMENT */}
         <TolPath />
       
-          {/* PRODUCTS DIRECTORY GRID */}
+        {/* PRODUCTS DIRECTORY GRID */}
         <ListingProducts />
-
-      
         
-      
         <SocialMedia/>
       </main>
     </HomeLayout>

@@ -19,37 +19,27 @@ function UsersPage() {
     fetchFilteredUsers();
   }, [searchQuery, locationQuery]); 
 
-  const fetchFilteredUsers = async () => {
-    try {
-      setLoading(true);
-      let dbQuery = supabase.from('profiles').select('*');
+const fetchFilteredUsers = async () => {
+  try {
+    setLoading(true);
+    // Fetch profile AND their courses (assuming a foreign key exists)
+    let dbQuery = supabase.from('profiles').select('*, products(*)');
 
-      // 📍 CASE 1: Location-Specific Query Handling
-      if (locationQuery.trim() !== '') {
-        const cleanLocation = locationQuery.trim();
-        const matchString = `%${cleanLocation}%`;
-        
-        // Target structural location column natively in profiles
-        dbQuery = dbQuery.ilike('location', matchString);
-      } 
-      // 🔍 CASE 2: Text/Handle Fallback Query Handling
-      else if (searchQuery.trim() !== '') {
-        const cleanQuery = searchQuery.trim();
-        const matchString = `%${cleanQuery}%`;
-        
-        dbQuery = dbQuery.or(`full_name.ilike.${matchString},username.ilike.${matchString}`);
-      }
-
-      const { data, error } = await dbQuery;
-      
-      if (error) throw error;
-      setUsers(data || []);
-    } catch (err) {
-      console.error('Error fetching user list matrix:', err.message);
-    } finally {
-      setLoading(false);
+    if (locationQuery.trim() !== '') {
+      dbQuery = dbQuery.ilike('location', `%${locationQuery.trim()}%`);
+    } else if (searchQuery.trim() !== '') {
+      dbQuery = dbQuery.or(`full_name.ilike.%${searchQuery.trim()}%,username.ilike.%${searchQuery.trim()}%`);
     }
-  };
+
+    const { data, error } = await dbQuery.order('rating', { ascending: false });
+    if (error) throw error;
+    setUsers(data || []);
+  } catch (err) {
+    console.error('Error:', err.message);
+  } finally {
+    setLoading(false);
+  }
+};
 
   // Determine subheader display text dynamically
   const getSubheaderText = () => {
@@ -101,72 +91,58 @@ function UsersPage() {
           </div>
         ) : (
           /* Dynamic Profile Match Render Loop Grid */
-          <div className="space-y-3">
-            {users.map((profile) => (
-              <div 
-                key={profile.id} 
-                className="bg-white rounded-2xl p-4 border border-slate-100 shadow-2xs hover:shadow-xs transition flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-              >
-                {/* Profile Meta Left Wing info group */}
-                <div className="flex items-center gap-4">
-                  <img 
-                    src={profile.avatar_url || "https://api.dicebear.com/7.x/bottts/svg?seed=fallback"} 
-                    alt={profile.full_name || "Profile"} 
-                    className="w-14 h-14 rounded-full object-cover border border-slate-100 bg-slate-50"
-                  />
-                  <div>
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <h3 className="font-black text-slate-900 text-sm leading-tight">
-                        {profile.full_name || 'Anonymous User'}
-                      </h3>
-                      
-                      {profile.username && (
-                        <span className="text-xs font-bold text-blue-600">
-                          @{profile.username}
-                        </span>
-                      )}
-
-                      {profile.is_verified_seller && (
-                        <span className="inline-flex items-center gap-0.5 text-[9px] font-bold bg-amber-50 text-amber-700 border border-amber-200/60 px-1.5 py-0.5 rounded-md">
-                          <ShieldCheck size={10} /> Seller
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-xs font-semibold text-slate-400 mt-0.5">{profile.email}</p>
-                    
-                    {/* Secondary Metrics Row Indicators */}
-                    <div className="flex items-center gap-3 text-slate-400 text-[11px] font-medium mt-1.5">
-                      <span className="flex items-center gap-0.5 text-slate-600">
-                        <Star size={12} className="text-yellow-500 fill-yellow-500" />
-                        <strong>{profile.rating ? Number(profile.rating).toFixed(2) : "0.00"}</strong>
-                      </span>
-                      <span>•</span>
-                      <span>{profile.completion_rate || "0%"} Completion</span>
-                      <span>•</span>
-                      
-                      {/* Dynamically display user location from database record fields */}
-                      <span className="flex items-center gap-0.5 text-slate-600 font-bold">
-                        <MapPin size={10} className="text-blue-500" /> 
-                        {profile.location || "Unknown Location"}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* View Actions Link navigation button right layout */}
-                <div className="flex items-center justify-end border-t sm:border-0 pt-3 sm:pt-0 border-slate-50">
-                  <Link 
-                    to={profile.id ? `/profile/${profile.id}` : '#'} 
-                    className="w-full sm:w-auto inline-flex items-center justify-center gap-1 text-xs font-bold bg-slate-50 text-slate-700 hover:bg-blue-600 hover:text-white px-4 py-2.5 rounded-xl border border-slate-200/60 transition group cursor-pointer"
-                  >
-                    <span>View Profile</span>
-                    <ChevronRight size={14} className="text-slate-400 group-hover:text-white transition" />
-                  </Link>
-                </div>
-
-              </div>
-            ))}
+<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+  {users.map((profile) => (
+    <div key={profile.id} className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm hover:shadow-md transition-all flex flex-col h-full">
+      
+      {/* Profile Header with Rating */}
+      <div className="flex items-start justify-between mb-6">
+        <div className="flex items-center gap-4">
+          <img 
+            src={profile.avatar_url || "https://api.dicebear.com/7.x/bottts/svg?seed=fallback"} 
+            className="w-14 h-14 rounded-2xl object-cover" 
+          />
+          <div>
+            <h3 className="font-black text-slate-900">{profile.full_name}</h3>
+            <p className="text-[10px] font-bold text-slate-400 flex items-center gap-1">
+              <MapPin size={10} className="text-blue-500" /> {profile.location || "Nepal"}
+            </p>
           </div>
+        </div>
+        
+        {/* Rating Badge */}
+        <div className="flex items-center gap-1 bg-yellow-50 text-yellow-700 px-2.5 py-1 rounded-xl font-black text-xs">
+          <Star size={12} className="fill-yellow-500 text-yellow-500" />
+          {profile.rating ? Number(profile.rating).toFixed(1) : "0.0"}
+        </div>
+      </div>
+
+      {/* Course Listing (Small Cards) */}
+      <div className="flex-grow space-y-2 mb-6">
+        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Featured Courses</p>
+        
+        {profile.products && profile.products.length > 0 ? (
+          profile.products.slice(0, 2).map((course) => ( // Show max 2 to keep layout clean
+            <div key={course.id} className="bg-slate-50 p-3 rounded-xl flex justify-between items-center border border-slate-100">
+              <span className="font-bold text-xs text-slate-700 truncate mr-2">{course.title}</span>
+              <span className="text-[10px] font-black text-blue-600">Rs. {course.price}</span>
+            </div>
+          ))
+        ) : (
+          <p className="text-[10px] text-slate-400 italic">No courses listed.</p>
+        )}
+      </div>
+
+      {/* Action Button */}
+      <Link 
+        to={`/profile/${profile.id}`} 
+        className="w-full text-center py-3 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-blue-600 transition"
+      >
+        View Full Profile
+      </Link>
+    </div>
+  ))}
+</div>
         )}
       </div>
     </div>
