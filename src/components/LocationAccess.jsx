@@ -1,7 +1,9 @@
 import { ArrowRight, Sparkles } from 'lucide-react'
 import React from 'react'
+import { Link } from 'react-router-dom'
 
 function LocationAccess() {
+
   return (
  <div className="bg-gradient-to-r from-amber-50/60 via-orange-50/40 to-blue-50/30 border border-amber-200/60 rounded-3xl p-6 flex flex-col md:flex-row items-center justify-between gap-4 relative overflow-hidden shadow-xs">
 
@@ -29,13 +31,13 @@ function LocationAccess() {
 
             </div>
 
-            <button onClick={() => navigate("/verify")} className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-black rounded-xl transition flex items-center gap-1.5 shrink-0 shadow-sm">
+            <Link to="/verify" className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-black rounded-xl transition flex items-center gap-1.5 shrink-0 shadow-sm">
 
               <span>Add Your Location</span>
 
               <ArrowRight size={14} />
 
-            </button>
+            </Link>
 
           </div>
   )

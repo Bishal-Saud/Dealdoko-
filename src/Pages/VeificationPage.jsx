@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../api/supabase.js'; 
 import { ShieldCheck, Upload, MapPin, Phone, FileText, CheckCircle2, Clock, Map, UserCheck, Navigation, AlertTriangle } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
-
+import HomeLayout from '../Layouts/HomeLayout.jsx'
 function VerificationPage() {
   const [user, setUser] = useState(null);
   const [kycStatus, setKycStatus] = useState('unverified'); // unverified, pending, verified, rejected
@@ -163,6 +163,7 @@ function VerificationPage() {
   };
 
   return (
+    <HomeLayout>
     <div className="min-h-screen bg-slate-50 py-10 px-4">
       <Toaster />
       <div className="max-w-2xl mx-auto bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden">
@@ -275,21 +276,7 @@ function VerificationPage() {
               />
             </div>
 
-            {/* Field Section 2: Citizenship Number Setup */}
-            <div className="space-y-3">
-              <h4 className="text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-2"><FileText size={16} className="text-blue-500" /> Government Registration ID</h4>
-              <div className="space-y-1">
-                <label className="text-[11px] font-bold text-slate-500 uppercase">Citizenship or National ID Number</label>
-                <input 
-                  type="text" 
-                  required
-                  placeholder="e.g., 12-34-56-7890" 
-                  value={citizenshipNumber}
-                  onChange={(e) => setCitizenshipNumber(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium outline-none focus:border-blue-500 transition"
-                />
-              </div>
-            </div>
+    
 
             {/* Field Section 3: Physical Geographic Locations Mapping */}
             <div className="space-y-4 pt-2 border-t border-slate-100">
@@ -375,6 +362,22 @@ function VerificationPage() {
                 <input type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
               </label>
             </div>
+{/* 
+                    Field Section 2: Citizenship Number Setup */}
+            <div className="space-y-3">
+              <h4 className="text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-2"><FileText size={16} className="text-blue-500" /> Government Registration ID</h4>
+              <div className="space-y-1">
+                <label className="text-[11px] font-bold text-slate-500 uppercase">Citizenship or National ID Number</label>
+                <input 
+                  type="text" 
+                  required
+                  placeholder="e.g., 12-34-56-7890" 
+                  value={citizenshipNumber}
+                  onChange={(e) => setCitizenshipNumber(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium outline-none focus:border-blue-500 transition"
+                />
+              </div>
+            </div>
 
             {/* Submit Action Block */}
             <button 
@@ -388,6 +391,7 @@ function VerificationPage() {
         )}
       </div>
     </div>
+    </HomeLayout>
   );
 }
 
