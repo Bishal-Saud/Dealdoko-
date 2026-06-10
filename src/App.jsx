@@ -11,15 +11,17 @@ import ProtectedRoute from './components/ProtectedRoute.jsx'
 import ManageOrderPage from './Pages/ManageOrderPage.jsx'
 import TermsAndPolicyPage from './Pages/TermsAndPolicyPage.jsx'
 import AboutUsPage from './Pages/AboutUsPage.jsx'
-import SettingsPage from './Pages/SettingsPage.jsx'
 import AskedQuestionPage from './Pages/AskedQuestionPage.jsx'
 import ContactSellerPage from './Pages/ContactSellerPage.jsx'
+import EditProfilePage from './Pages/EditProfilePage.jsx'
+import NotFound from './context/NotFound.jsx'
 
 function App() {
   return (
     <>
       <Routes>
         {/* Public Routes */}
+        <Route path="*" element={<NotFound />} />
         <Route path='/' element={<HomePage />} />
         <Route path='/profile' element={<ProfilePage />} />
         <Route path="/profile/:id" element={<ProfilePage />} />
@@ -28,7 +30,7 @@ function App() {
         <Route path='/role' element={<RolePage />} />
         <Route path='/terms-and-policy' element={<TermsAndPolicyPage />} />
         <Route path='/aboutus' element={<AboutUsPage />} />
-        <Route path='/settings' element={<SettingsPage />} />
+        <Route path='/edit-profile' element={<EditProfilePage />} />
         <Route path='/recent-queries' element={<AskedQuestionPage />} />
         <Route path='/book-tutor/:courseId' element={<ContactSellerPage />} />
 

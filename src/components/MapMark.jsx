@@ -6,7 +6,8 @@ import { MapPin, Star, GraduationCap, MessageSquare, Loader2, AlertCircle, Lock,
 import 'leaflet/dist/leaflet.css';
 import RestrictedMapBanner from './RestrictedMapBanner.jsx';
 
-// 1. Premium Glowing Interactive Map Pins
+
+
 const customTeacherIcon = new L.DivIcon({
   className: 'custom-teacher-geo-marker',
   html: `

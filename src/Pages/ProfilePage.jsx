@@ -192,6 +192,16 @@ function ProfilePage() {
           
           {/* LEFT PANEL: MAIN IDENTIFICATION BADGE CARD */}
           <div className="lg:col-span-1 bg-white rounded-3xl p-6 shadow-xs border border-slate-100 flex flex-col items-center text-center h-fit">
+           {isOwnProfile && (
+    <div className="w-full flex justify-end -mt-2 mb-2">
+      <button 
+        onClick={() => navigate('/edit-profile')} 
+        className="text-[10px] font-bold text-slate-500 hover:text-blue-600 bg-slate-50 hover:bg-blue-50 px-3 py-1.5 rounded-lg transition border border-slate-100"
+      >
+        Edit Profile
+      </button>
+    </div>
+  )}
             <div className="relative">
               <img 
                 src={avatarUrl} 

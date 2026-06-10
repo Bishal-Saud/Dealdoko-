@@ -763,19 +763,7 @@ const handleLocationBadgeClick = () => {
 
 
 
-              <Link to="/settings" onClick={() => setIsSidebarOpen(false)} className="w-full flex items-center justify-between p-3 text-gray-700 hover:bg-blue-50/50 rounded-xl font-semibold transition group">
-
-                <div className="flex items-center gap-3">
-
-                  <Settings size={18} className="text-gray-400" />
-
-                  <span>Settings</span>
-
-                </div>
-
-                <ChevronRight size={16} />
-
-              </Link>
+           
 
 
 
