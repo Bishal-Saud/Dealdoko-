@@ -121,6 +121,7 @@ function ProfilePage() {
   const fullName = profile?.full_name || "Guest User";
   const email = profile?.email || "No email linked";
   const avatarUrl = profile?.avatar_url || "https://api.dicebear.com/7.x/bottts/svg?seed=fallback";
+  const phoneNumber = profile?.phone_number || "Not Provided";
   
   const isVerifiedSeller = profile?.is_verified_seller === true;
   const isVerifiedBuyer = profile?.is_verified_buyer === true;
@@ -229,6 +230,7 @@ function ProfilePage() {
               <p className="text-xs font-bold text-blue-600 mt-0.5">@{profile.username}</p>
             )}
             <p className="text-xs font-semibold text-slate-400 mt-0.5">{email}</p>
+            <p className="text-xs font-semibold text-slate-400 mt-0.5">{phoneNumber}</p>
 
             <div className="flex flex-wrap gap-2 justify-center mt-4">
               {isVerifiedSeller && isVerifiedBuyer ? (
