@@ -9,6 +9,7 @@ import Warning from "../components/Warning.jsx";
 
 import { useAuth } from "../context/AuthProvider.jsx"; 
 import LocationModal from "../model/LocationModel.jsx"; 
+import MapMark from "../components/MapMark.jsx";
 
 function HomePage() {
  
@@ -39,7 +40,7 @@ if (loading) {
       <main className="max-w-7xl mx-auto px-4 mt-4 md:mt-8 space-y-6 md:space-y-10">
         <Warning/>
         
-      
+     
         <section className="text-center py-8">
           <h1 className="text-3xl md:text-5xl font-black text-slate-900 mb-4">
             Expert <span className="text-blue-600">Home Tuition</span> in Nepal
@@ -49,8 +50,10 @@ if (loading) {
           </p>
         </section>
 
+         <MapMark />
+
         {/* GEOLOCATION TUTOR SEARCH SEGMENT */}
-        <TolPath />
+        {/* <TolPath /> */}
       
         {/* PRODUCTS DIRECTORY GRID */}
         <ListingProducts />
