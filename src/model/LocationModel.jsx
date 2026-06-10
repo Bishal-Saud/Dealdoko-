@@ -13,13 +13,37 @@ const LocationModal = ({ user }) => {
   const [landmark, setLandmark] = useState('');
 
   useEffect(() => {
-    if (user && (!user.location_name || user.location_name === "") && !localStorage.getItem("dismissed_location")) {
-      setIsOpen(true);
+    if (user && (!user.location_name || user.location_name === "")) {
+      const dismissedAt = localStorage.getItem("dismissed_location_at");
+      
+      if (dismissedAt) {
+        const timePassed = Date.now() - parseInt(dismissedAt, 10);
+        const fiveMinutes = 2 * 60 * 1000; // 2 minutes in milliseconds
+
+        if (timePassed > fiveMinutes) {
+          // 2 minutes have passed, clear the timestamp and open the modal
+          localStorage.removeItem("dismissed_location_at");
+          setIsOpen(true);
+        } else {
+          // Not enough time has passed yet. Set a timeout to trigger it when the 2 mins are up
+          const remainingTime = fiveMinutes - timePassed;
+          const timer = setTimeout(() => {
+            localStorage.removeItem("dismissed_location_at");
+            setIsOpen(true);
+          }, remainingTime);
+
+          return () => clearTimeout(timer);
+        }
+      } else {
+        // No dismissal timestamp exists, show modal immediately
+        setIsOpen(true);
+      }
     }
   }, [user]);
 
   const handleClose = () => {
-    localStorage.setItem("dismissed_location", "true");
+    // Save the current timestamp when "Maybe Later" is clicked
+    localStorage.setItem("dismissed_location_at", Date.now().toString());
     setIsOpen(false);
   };
 
@@ -59,7 +83,7 @@ const LocationModal = ({ user }) => {
       },
       (geoError) => {
         setErrorMsg("Location access denied. Please enable browser permissions.");
-        setLoading(false);
+        loading ? setLoading(false) : null;
       }
     );
   };
@@ -78,12 +102,14 @@ const LocationModal = ({ user }) => {
           location: detectedData.city,
           latitude: detectedData.latitude,   
           longitude: detectedData.longitude,
-          location_description: landmark // Saves "Near Mahakali Hospital", etc.
+          location_description: landmark 
         })
         .eq('id', user.id);
 
       if (error) throw error;
       
+      // Clear the dismissed timestamp since they successfully saved their location
+      localStorage.removeItem("dismissed_location_at");
       setIsOpen(false);
       window.location.reload(); 
     } catch (err) {

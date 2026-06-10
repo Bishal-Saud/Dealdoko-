@@ -33,16 +33,13 @@ if (loading) {
         <link rel="canonical" href="https://tolpath.com/" />
       </Helmet>
 
-      {/* 3. Mount the Location Modal here. 
-        It returns null if closed or if user is already configured, 
-        so it won't interrupt your layout design!
-      */}
+   
       <LocationModal user={user} />
 
       <main className="max-w-7xl mx-auto px-4 mt-4 md:mt-8 space-y-6 md:space-y-10">
         <Warning/>
         
-        {/* H1 Tag: The most important SEO signal for Google */}
+      
         <section className="text-center py-8">
           <h1 className="text-3xl md:text-5xl font-black text-slate-900 mb-4">
             Expert <span className="text-blue-600">Home Tuition</span> in Nepal
