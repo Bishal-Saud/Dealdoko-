@@ -127,7 +127,7 @@ function AboutUsPage() {
       </section>
 
       {/* 3. DYNAMIC STATS INSIGHT */}
-      <section className="max-w-5xl mx-auto bg-gradient-to-r from-slate-900 to-indigo-950 text-white rounded-3xl p-8 md:p-10 shadow-xl relative overflow-hidden">
+      <section className="max-w-5xl mx-auto bg-gradient-to-r  text-white rounded-3xl p-8 md:p-10 shadow-xl relative overflow-hidden">
         <div className="absolute right-0 bottom-0 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
         <div className="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-8 text-center divide-y md:divide-y-0 md:divide-x divide-slate-800">
           <div className="space-y-1">
@@ -138,9 +138,13 @@ function AboutUsPage() {
             <div className="text-3xl font-black text-emerald-400">Verified</div>
             <div className="text-xs font-bold uppercase tracking-widest text-slate-400">Local Profiles</div>
           </div>
-          <div className="space-y-1 pt-6 md:pt-0">
+          {/* <div className="space-y-1 pt-6 md:pt-0">
             <div className="text-3xl font-black text-amber-400">रू 0</div>
             <div className="text-xs font-bold uppercase tracking-widest text-slate-400">Hidden Middleman Fees</div>
+          </div> */}
+          <div className="space-y-1 pt-6 md:pt-0">
+            <div className="text-3xl font-black text-amber-400">Verified</div>
+            <div className="text-xs font-bold uppercase tracking-widest text-slate-400">Local Teachers</div>
           </div>
         </div>
       </section>
