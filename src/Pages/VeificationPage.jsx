@@ -206,7 +206,7 @@ function VerificationPage() {
 
               <div className="pt-4">
                 <button
-                  onClick={() => window.location.href = "/settings"}
+                  onClick={() => window.location.href = "/"}
                   className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm rounded-xl shadow-md transition"
                 >
                   Go to Dashboard
