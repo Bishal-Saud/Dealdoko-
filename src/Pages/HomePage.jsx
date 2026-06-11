@@ -10,6 +10,7 @@ import Warning from "../components/Warning.jsx";
 import { useAuth } from "../context/AuthProvider.jsx"; 
 import LocationModal from "../model/LocationModel.jsx"; 
 import MapMark from "../components/MapMark.jsx";
+import BecomeATeacherAds from "../Ads/BecomeATeacherAds.jsx";
 
 function HomePage() {
  
@@ -34,6 +35,7 @@ if (loading) {
         <link rel="canonical" href="https://tolpath.com/" />
       </Helmet>
 
+{user && <BecomeATeacherAds/>}
    
       <LocationModal user={user} />
 
