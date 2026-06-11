@@ -231,12 +231,18 @@ const handleGoogleLogin = async () => {
   };
 
 const handleLocationBadgeClick = () => {
-  // Check if location is invalid
+  // 1. Check if location is missing or invalid
   if (userLocation === "Invalid Location" || !userLocation) {
-    // Navigate to verify page if location is missing/invalid
-    navigate("/verify");
+    // 2. ONLY navigate to verify if the user is logged in
+    if (currentUser) {
+      navigate("/verify");
+    } else {
+      // If not logged in, trigger the login modal and notify them
+      setIsAuthOpen(true);
+      toast.error("Please log in to verify your location.");
+    }
   } else {
-    // Navigate to users search with the valid location
+    // 3. Navigate to users search if the location is valid
     navigate(`/users?location=${encodeURIComponent(userLocation)}`);
   }
 };
