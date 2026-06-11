@@ -14,6 +14,8 @@ import {
   User,
   Layers,
   PhoneCall,
+  SlidersHorizontal,
+  Briefcase,
 } from "lucide-react";
 import { supabase } from "../api/supabase.js";
 import toast, { Toaster } from "react-hot-toast";
@@ -35,6 +37,10 @@ function ListingProducts() {
   const [currentUser, setCurrentUser] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
 
+  // Filter States for Local Batches/Courses
+  const [maxPrice, setMaxPrice] = useState("");
+  const [selectedClass, setSelectedClass] = useState("All");
+
   const subjects = [
     "Mathematics",
     "Science & Tech",
@@ -55,16 +61,16 @@ function ListingProducts() {
 
       setCurrentUser(user);
 
-      // 1. Fetch Profiles first
+      // 1. Fetch Profiles
       const { data: profilesData, error: profilesError } = await supabase
         .from("profiles")
         .select(
-          "id, full_name, username, avatar_url, phone_number, location, location_name, location_description, is_verified_seller",
+          "id, full_name, username, avatar_url, phone_number, location, location_name, location_description, is_verified_seller"
         );
 
       if (profilesError) throw profilesError;
 
-      // 2. Fetch all products
+      // 2. Fetch All Products
       const { data: productsData, error: productsError } = await supabase
         .from("products")
         .select("*")
@@ -72,16 +78,16 @@ function ListingProducts() {
 
       if (productsError) throw productsError;
 
-      // 3. Filter products: Only keep those where the seller is verified
+      // 3. Filter products: Keep verified sellers
       const verifiedProducts = productsData.filter((product) => {
         const tutor = profilesData.find((p) => p.id === product.seller_id);
         return tutor && tutor.is_verified_seller === true;
       });
 
-      // 4. Map profiles onto the filtered list
+      // 4. Map profiles to listings
       const combinedData = verifiedProducts.map((product) => {
         const matchingTutor = profilesData.find(
-          (p) => p.id === product.seller_id,
+          (p) => p.id === product.seller_id
         );
 
         return {
@@ -92,7 +98,7 @@ function ListingProducts() {
 
       setCourses(combinedData);
 
-      // --- Logic for Local Tutors ---
+      // --- Logic for Local Filters ---
       if (user) {
         const { data: profileData } = await supabase
           .from("profiles")
@@ -120,13 +126,13 @@ function ListingProducts() {
             })
             .map((tutor) => {
               const tutorCourses = verifiedProducts.filter(
-                (p) => p.seller_id === tutor.id,
+                (p) => p.seller_id === tutor.id
               );
               const uniqueSubjects = [
                 ...new Set(
                   tutorCourses
                     .map((c) => c.subject || c.category)
-                    .filter(Boolean),
+                    .filter(Boolean)
                 ),
               ];
 
@@ -151,7 +157,7 @@ function ListingProducts() {
                 pLocName.includes(cleanLoc) ||
                 cleanLoc.includes(pLocName)
               );
-            }),
+            })
           );
         }
       }
@@ -170,8 +176,20 @@ function ListingProducts() {
   const filteredCourses = courses.filter(
     (item) =>
       (item.subject || item.category)?.toLowerCase() ===
-      activeSubject.toLowerCase(),
+      activeSubject.toLowerCase()
   );
+
+  // Filter local courses based on interactive user parameters
+  const filteredLocalCourses = localCourses.filter((course) => {
+    const matchesPrice = maxPrice
+      ? parseFloat(course.price || 0) <= parseFloat(maxPrice)
+      : true;
+    const matchesClass =
+      selectedClass === "All"
+        ? true
+        : course.target_class?.toLowerCase() === selectedClass.toLowerCase();
+    return matchesPrice && matchesClass;
+  });
 
   const fallbackImage =
     "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=500&auto=format&fit=crop&q=60";
@@ -185,20 +203,20 @@ function ListingProducts() {
         <img
           src={tutor.avatar_url}
           alt={displayName}
-          className="w-12 h-12 rounded-full object-cover ring-2 ring-blue-50 shrink-0"
+          className="w-10 h-10 rounded-full object-cover ring-2 ring-blue-50 shrink-0"
         />
       );
     }
 
     return (
-      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-white font-black text-sm flex items-center justify-center shadow-xs ring-2 ring-blue-50 shrink-0">
+      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-white font-black text-xs flex items-center justify-center ring-2 ring-blue-50 shrink-0">
         {initial}
       </div>
     );
   };
 
   return (
-    <div className="space-y-10 pb-12">
+    <div className="space-y-10 pb-12 px-4 max-w-7xl mx-auto">
       <Helmet>
         <title>
           {userLocation
@@ -220,107 +238,87 @@ function ListingProducts() {
       {/* LOCAL AREA PROFILE AND COURSES INTEGRATION BANNER */}
       <section>
         {userLocation ? (
-          <div className="bg-gradient-to-r from-blue-50/70 to-indigo-50/70 border border-blue-100 rounded-3xl p-6 shadow-xs space-y-8">
+          <div className="bg-gradient-to-r from-blue-50/70 to-indigo-50/70 border border-blue-100/80 rounded-3xl p-4 md:p-6 shadow-xs space-y-6">
             <div>
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs font-black uppercase tracking-wider mb-2">
-                <MapPin size={12} className="animate-bounce" /> Hub Proximity Tracker
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-blue-100 text-blue-700 rounded-full text-[10px] font-black uppercase tracking-wider mb-2">
+                <MapPin size={10} className="animate-pulse" /> Hub Proximity Tracker
               </span>
-              <h1 className="text-xl md:text-2xl font-black text-gray-900 tracking-tight">
-                {userLocation
-                  ? `Home Tuition Teachers & Tutors in ${userLocation}`
-                  : "Find Verified Home Tuition Teachers Near You"}
+              <h1 className="text-lg md:text-2xl font-black text-gray-900 tracking-tight">
+                Home Tuition Setup in {userLocation}
               </h1>
             </div>
 
-            {/* Sub-Section 1: Local Teachers Profiles */}
+            {/* Sub-Section 1: Local Teachers Profiles - Max 5 Teachers, Compact UI */}
             <div className="space-y-3">
-              <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                <User size={14} className="text-blue-500" /> Nearby Educators ({localTutors.length})
-              </h3>
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                  <User size={14} className="text-blue-500" /> Nearby Educators (Showing Max 5)
+                </h3>
+                <span className="text-[11px] font-bold text-slate-400">
+                  Total available: {localTutors.length}
+                </span>
+              </div>
 
               {localTutors.length === 0 ? (
                 <div className="text-center py-6 bg-white/60 border border-dashed border-gray-200 rounded-2xl text-xs font-bold text-gray-500">
                   No educators registered in {userLocation} yet.
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {localTutors.map((tutor) => (
+                /* Native Responsive Horizontal Slider Layout */
+                <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar snap-x snap-mandatory">
+                  {localTutors.slice(0, 5).map((tutor) => (
                     <div
                       key={tutor.id}
-                      className="bg-white rounded-2xl border border-blue-100/70 p-4 shadow-2xs hover:shadow-md transition flex flex-col justify-between group"
+                      className="bg-white rounded-xl border border-blue-100 p-3 shadow-2xs hover:shadow-xs transition flex flex-col justify-between min-w-[240px] max-w-[250px] sm:flex-1 snap-start shrink-0"
                     >
                       <div>
-                        <div className="flex items-center gap-3 mb-3">
+                        <div className="flex items-center gap-2 mb-2">
                           {renderAvatar(tutor)}
                           <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-1">
-                              <h4 className="text-sm font-black text-gray-900 truncate">
-                                {tutor.full_name || (tutor.username ? `@${tutor.username}` : "Educator")}
+                            <div className="flex items-center gap-0.5">
+                              <h4 className="text-xs font-black text-gray-900 truncate">
+                                {tutor.full_name || `@${tutor.username || "Educator"}`}
                               </h4>
                               <CheckCircle2
-                                size={13}
+                                size={11}
                                 className="text-emerald-500 fill-emerald-500/10 shrink-0"
                                 strokeWidth={3}
                               />
                             </div>
-                            <div className="mt-1">
-                              <p className="text-[10px] font-bold text-blue-600 uppercase">
-                                {tutor.location_name || tutor.location}
-                              </p>
-                              {tutor.location_description && (
-                                <p className="text-[10px] text-gray-500 italic mt-0.5 line-clamp-1">
-                                  {tutor.location_description}
-                                </p>
-                              )}
-                            </div>
-                            <span className="text-[10px] text-gray-400 font-bold flex items-center gap-0.5 mt-0.5">
-                              <GraduationCap size={11} /> {tutor.total_courses} active{" "}
-                              {tutor.total_courses === 1 ? "class" : "classes"}
-                            </span>
+                            <p className="text-[10px] font-bold text-blue-600 truncate uppercase">
+                              {tutor.location_name || tutor.location}
+                            </p>
                           </div>
                         </div>
 
-                        <div className="space-y-1.5 mb-4 text-xs">
-                          {tutor.active_subjects.length > 0 ? (
-                            <div className="flex flex-wrap gap-1">
-                              {tutor.active_subjects.map((sub, idx) => (
-                                <span
-                                  key={idx}
-                                  className="bg-slate-50 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded-md border border-slate-100"
-                                >
-                                  {sub}
-                                </span>
-                              ))}
-                            </div>
-                          ) : (
-                            <p className="text-[11px] text-gray-400 font-medium italic">
-                              General Syllabus Tutors
-                            </p>
-                          )}
+                        <div className="flex flex-wrap gap-1 mb-3">
+                          <span className="bg-slate-50 text-slate-600 text-[9px] font-bold px-1.5 py-0.5 rounded border border-slate-100 flex items-center gap-0.5">
+                            <GraduationCap size={10} /> {tutor.total_courses} Classes
+                          </span>
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-2 pt-3 border-t border-gray-50 mt-auto">
+                      <div className="grid grid-cols-2 gap-1.5 pt-2 border-t border-gray-50">
                         {tutor.phone_number ? (
                           <a
                             href={`tel:${tutor.phone_number}`}
-                            className="py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-xl text-xs font-black flex items-center justify-center gap-1 transition"
+                            className="py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg text-[10px] font-black flex items-center justify-center gap-0.5 transition"
                           >
-                            <Phone size={12} /> Call Now
+                            <Phone size={10} /> Call
                           </a>
                         ) : (
                           <button
                             onClick={() => toast.error("Phone number wasn't listed.")}
-                            className="py-2 bg-gray-50 text-gray-400 rounded-xl text-xs font-bold flex items-center justify-center gap-1 cursor-not-allowed"
+                            className="py-1.5 bg-gray-50 text-gray-400 rounded-lg text-[10px] font-bold flex items-center justify-center gap-0.5 cursor-not-allowed"
                           >
-                            <Phone size={12} /> No Phone
+                            <Phone size={10} /> None
                           </button>
                         )}
                         <button
                           onClick={() => navigate(`/profile/${tutor.id}`)}
-                          className="py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black flex items-center justify-center gap-1 shadow-2xs transition"
+                          className="py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[10px] font-black flex items-center justify-center gap-0.5 transition"
                         >
-                          <User size={12} /> View Profile
+                          Profile <ArrowRight size={10} />
                         </button>
                       </div>
                     </div>
@@ -329,72 +327,97 @@ function ListingProducts() {
               )}
             </div>
 
-            {/* Sub-Section 2: Local Target Classes */}
-            <div className="space-y-3">
-              <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                <Layers size={14} className="text-indigo-500" /> Active Local Batches ({localCourses.length})
-              </h3>
+            {/* Sub-Section 2: Interactive Local Batches System (With Filter Controls) */}
+            <div className="space-y-4 pt-2 border-t border-blue-100/50">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                  <Layers size={14} className="text-indigo-500" /> Active Local Batches ({filteredLocalCourses.length})
+                </h3>
 
-              {localCourses.length === 0 ? (
+                {/* Filter Controls Bar */}
+                <div className="flex items-center flex-wrap gap-2 text-xs">
+                  <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg px-2 py-1">
+                    <SlidersHorizontal size={12} className="text-gray-400" />
+                    <input
+                      type="number"
+                      placeholder="Max Price (रू)"
+                      value={maxPrice}
+                      onChange={(e) => setMaxPrice(e.target.value)}
+                      className="w-24 outline-hidden text-[11px] font-medium"
+                    />
+                  </div>
+
+                </div>
+              </div>
+
+              {filteredLocalCourses.length === 0 ? (
                 <div className="text-center py-6 bg-white/60 border border-dashed border-gray-200 rounded-2xl text-xs font-bold text-gray-500">
-                  No tuition bundles targeted down {userLocation} streets yet.
+                  No courses matching filter rules down {userLocation}.
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {localCourses.map((course) => (
+                /* Highly Compact High Density Mobile Friendly Grid Layout */
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                  {filteredLocalCourses.map((course) => (
                     <div
                       key={course.id}
-                      className="bg-white rounded-2xl border border-blue-100/70 p-4 shadow-2xs hover:shadow-md transition flex flex-col justify-between group"
+                      className="bg-white rounded-xl border border-blue-100/70 p-2.5 shadow-2xs hover:shadow-xs transition flex flex-col justify-between group"
                     >
                       <div
                         onClick={() => navigate(`/book-tutor/${course.id}`)}
-                        className="cursor-pointer space-y-3"
+                        className="cursor-pointer space-y-2"
                       >
-                        <div className="relative aspect-video w-full rounded-xl overflow-hidden bg-slate-100">
+                        <div className="relative aspect-video w-full rounded-lg overflow-hidden bg-slate-50">
                           <img
                             src={course.image_url || fallbackImage}
                             alt={course.title}
                             className="w-full h-full object-cover"
                           />
-                          <span className="absolute bottom-2 left-2 bg-slate-900/70 text-white text-[9px] font-bold px-2 py-0.5 rounded-md">
-                            {course.target_class || "All Levels"}
+                          <span className="absolute bottom-1 left-1 bg-slate-900/80 text-white text-[8px] font-black px-1.5 py-0.5 rounded">
+                            {course.target_class || "General"}
                           </span>
                         </div>
 
                         <div>
-                          <h4 className="text-sm font-black text-slate-900 line-clamp-1 group-hover:text-blue-600 transition">
+                          <h4 className="text-xs font-black text-slate-900 line-clamp-1 group-hover:text-blue-600 transition">
                             {course.title}
                           </h4>
-                          <p className="text-xs text-emerald-600 font-extrabold mt-0.5">
+                          <p className="text-[11px] text-emerald-600 font-black mt-0.5">
                             रू {parseFloat(course.price || 0).toLocaleString()} /mo
                           </p>
-                          <p className="text-[11px] text-slate-400 line-clamp-2 mt-1 leading-relaxed">
-                            {course.description}
-                          </p>
+
+                          {/* Interactive Deal Architecture Metric Row */}
+                          <div className="flex flex-col gap-0.5 mt-1 text-[9px] text-slate-400 font-bold">
+                            {course.timing && (
+                              <span className="flex items-center gap-0.5 text-gray-600">
+                                <Clock size={9} /> {course.timing}
+                              </span>
+                            )}
+                        
+                          </div>
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-2 pt-3 border-t border-gray-50 mt-4">
+                      <div className="grid grid-cols-2 gap-1 pt-2 border-t border-gray-50 mt-2">
                         {course.tutor_profile?.phone_number ? (
                           <a
                             href={`tel:${course.tutor_profile.phone_number}`}
-                            className="py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-xl text-xs font-black flex items-center justify-center gap-1 transition"
+                            className="py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-md text-[9px] font-black flex items-center justify-center gap-0.5 transition"
                           >
-                            <PhoneCall size={12} /> Contact Now
+                            <PhoneCall size={9} /> Call
                           </a>
                         ) : (
                           <button
-                            onClick={() => toast.error("Educator contact line unconfigured.")}
-                            className="py-2 bg-gray-50 text-gray-400 rounded-xl text-xs font-bold flex items-center justify-center gap-1 cursor-not-allowed"
+                            onClick={() => toast.error("Educator line unconfigured.")}
+                            className="py-1 bg-gray-50 text-gray-400 rounded-md text-[9px] font-bold flex items-center justify-center gap-0.5 cursor-not-allowed"
                           >
-                            <PhoneCall size={12} /> No Contact
+                            <PhoneCall size={9} /> None
                           </button>
                         )}
                         <button
                           onClick={() => navigate(`/profile/${course.seller_id}`)}
-                          className="py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-black flex items-center justify-center gap-1 transition"
+                          className="py-1 bg-slate-900 hover:bg-slate-800 text-white rounded-md text-[9px] font-black flex items-center justify-center transition"
                         >
-                          <User size={12} /> Tutor Profile
+                          View Bio
                         </button>
                       </div>
                     </div>
@@ -408,153 +431,9 @@ function ListingProducts() {
         )}
       </section>
 
-      {/* ACADEMIC SUBJECTS NAVIGATION TABS */}
-      <section className="overflow-x-auto no-scrollbar -mx-4 px-4 md:mx-0 md:px-0">
-        <div className="flex gap-2.5 pb-2 md:pb-0">
-          {subjects.map((subj) => (
-            <button
-              key={subj}
-              onClick={() => setActiveSubject(subj)}
-              className={`px-5 py-2 rounded-full text-xs md:text-sm font-semibold tracking-wide whitespace-nowrap transition-all duration-200 cursor-pointer ${
-                activeSubject === subj
-                  ? "bg-blue-600 text-white shadow-md shadow-blue-100"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-              }`}
-            >
-              {subj}
-            </button>
-          ))}
-        </div>
-      </section>
+    
 
-      {/* RECENT / ALL SYSTEM LISTINGS DIRECTORY GRID */}
-      <section>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg md:text-2xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
-            All Available General Tuitions{" "}
-            <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-md">
-              {activeSubject}
-            </span>
-          </h2>
-          <button
-            onClick={fetchTuitionDirectoryAndProfiles}
-            className="text-xs md:text-sm font-bold text-blue-600 hover:underline cursor-pointer"
-          >
-            Refresh Classes
-          </button>
-        </div>
-
-        {loading ? (
-          <div className="py-20 flex justify-center items-center">
-            <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
-          </div>
-        ) : filteredCourses.length === 0 ? (
-          <div className="bg-white border border-gray-100 rounded-3xl p-12 text-center max-w-md mx-auto shadow-xs">
-            <BookOpen className="mx-auto text-gray-300 mb-3" size={40} />
-            <h3 className="text-sm font-black text-gray-700">No active classes found</h3>
-            <p className="text-xs font-medium text-gray-400 mt-1">
-              Be the first educator to list a home tuition batch or crash course option under {activeSubject}!
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6">
-            {filteredCourses.map((course) => (
-              <div
-                key={course.id}
-                onClick={() => navigate(`/book-tutor/${course.id}`)}
-                className="bg-white rounded-2xl overflow-hidden shadow-xs border border-gray-100 hover:shadow-md transition duration-300 group flex flex-col h-full cursor-pointer"
-              >
-                <div className="relative aspect-square w-full bg-gray-50 overflow-hidden">
-                  <img
-                    src={course.image_url || fallbackImage}
-                    alt={course.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
-                    loading="lazy"
-                  />
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                    }}
-                    className="absolute top-2 right-2 p-1.5 bg-white/80 backdrop-blur-xs rounded-full shadow-xs text-gray-500 hover:text-red-500 hover:bg-white transition z-10"
-                  >
-                    <Heart size={16} />
-                  </button>
-                  <span className="absolute bottom-2 left-2 bg-slate-900/60 backdrop-blur-xs text-white text-[9px] font-bold px-2 py-0.5 rounded-md">
-                    {course.target_class || "All Levels"}
-                  </span>
-                </div>
-
-                <div className="p-3 md:p-4 flex flex-col flex-1 justify-between gap-3">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-1.5 text-[10px] md:text-xs font-bold text-amber-600 truncate mb-1">
-                      <GraduationCap size={12} className="shrink-0 text-amber-500" />
-                      <span className="truncate">
-                        Tutor: {course.tutor_profile?.full_name || "Verified Educator"}
-                      </span>
-                      <CheckCircle2
-                        size={10}
-                        className="text-emerald-500 fill-emerald-500/10 shrink-0"
-                        strokeWidth={3}
-                      />
-                    </div>
-
-                    <div className="text-base md:text-xl font-black text-gray-900 tracking-tight">
-                      रू {parseFloat(course.price || 0).toLocaleString()}{" "}
-                      <span className="text-[10px] text-gray-400 font-bold">/ month</span>
-                    </div>
-
-                    <h3 className="text-xs md:text-sm text-gray-700 font-bold line-clamp-1 group-hover:text-blue-600 transition">
-                      {course.title}
-                    </h3>
-
-                    {course.timing && (
-                      <div className="flex items-center gap-1 text-[10px] text-slate-500 font-semibold bg-slate-50 px-1.5 py-0.5 rounded w-max mt-1">
-                        <Clock size={10} className="text-slate-400" /> {course.timing}
-                      </div>
-                    )}
-
-                    {course.tutor_profile?.location_name ? (
-                      <div className="flex flex-col gap-1 mt-1">
-                        <div className="flex items-center gap-1 text-[10px] text-blue-600 font-semibold bg-blue-50 px-1.5 py-0.5 rounded w-max">
-                          <MapPin size={10} className="text-blue-400" /> {course.tutor_profile.location_name}
-                        </div>
-                        <p className="text-[9px] text-gray-400 px-1 italic">
-                          {course.tutor_profile.location_description}
-                        </p>
-                      </div>
-                    ) : (
-                      course.tutor_profile?.location && (
-                        <div className="flex items-center gap-1 text-[10px] text-blue-600 font-semibold bg-blue-50 px-1.5 py-0.5 rounded w-max mt-1">
-                          <MapPin size={10} className="text-blue-400" /> {course.tutor_profile.location}
-                        </div>
-                      )
-                    )}
-
-                    <p className="text-[11px] text-gray-400 font-medium line-clamp-2 leading-relaxed pt-1">
-                      {course.description}
-                    </p>
-                  </div>
-
-                  <div className="pt-2 border-t border-gray-50 mt-auto">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedCourse(course);
-                        setChatActive(true);
-                      }}
-                      className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white font-black text-xs rounded-xl shadow-xs transition duration-200 flex items-center justify-center gap-1 cursor-pointer"
-                    >
-                      <MessageSquare size={13} /> Contact Educator
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* LIVE INTERACTION CHAT MODAL MOUNT CONTROLLER */}
+      {/* LIVE INTERACTION CHAT MODAL */}
       {chatActive && selectedCourse && (
         <LiveChatModal
           productId={selectedCourse.id}

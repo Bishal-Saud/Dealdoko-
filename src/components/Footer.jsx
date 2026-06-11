@@ -11,12 +11,24 @@ function Footer() {
         <div className="grid grid-cols-4 gap-8 mb-12">
           
           {/* Brand & National Reach Statement */}
-          <section className="space-y-4">
-            <h3 className="text-2xl font-black text-white tracking-tight">Tol Path</h3>
-            <p className="text-sm text-slate-400 leading-relaxed">
-              The premier platform for verified home tuition in Nepal. We connect students across all 77 districts with expert, verified local tutors for personalized academic success. Based in Kanchanpur, serving the nation.
-            </p>
-          </section>
+        <section className="space-y-4">
+  
+  {/* Logo + Name */}
+  <div className="flex items-center gap-2">
+    <img
+      src="/favicon.ico"
+      alt="TolPath Logo"
+      className="w-8 h-8 rounded-md"
+    />
+    <h3 className="text-2xl font-black text-white tracking-tight">
+      Tol Path
+    </h3>
+  </div>
+
+  <p className="text-sm text-slate-400 leading-relaxed">
+    The premier platform for verified home tuition in Nepal. We connect students across all 77 districts with expert, verified local tutors for personalized academic success. Based in Kanchanpur, serving the nation.
+  </p>
+</section>
 
           {/* Tutoring Services (Keywords: Nationwide, Home Tuition) */}
           <nav className="space-y-4" aria-label="Tutoring Services">
