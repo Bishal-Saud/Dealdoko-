@@ -156,27 +156,28 @@ function Header() {
     };
   }, [currentUser, isChatOpen]);
 
-  // Google OAuth Login Handler
+const handleGoogleLogin = async () => {
+  setLoading(true);
 
-  const handleGoogleLogin = async () => {
-    setLoading(true);
-
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-
-        options: {
-          redirectTo: window.location.origin,
+  try {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: window.location.origin,
+        // Add this queryParams block
+        queryParams: {
+          prompt: 'select_account',
         },
-      });
+      },
+    });
 
-      if (error) throw error;
-    } catch (error) {
-      toast.error(error.message || "Failed to initialize Google login.");
-
-      setLoading(false);
-    }
-  };
+    if (error) throw error;
+  } catch (error) {
+    console.error("Auth Error:", error);
+    toast.error(error.message || "Failed to initialize Google login.");
+    setLoading(false);
+  }
+};
 
   const handleLogout = async () => {
     await supabase.auth.signOut();

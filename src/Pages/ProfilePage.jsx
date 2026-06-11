@@ -167,7 +167,10 @@ function ProfilePage() {
   
   const globalCompletionRate = completionRateCalculated > 100 ? "100%" : `${completionRateCalculated}%`;
   const totalCompletedBatches = Math.floor(totalCompletedCycles);
-
+const canViewPhoneNumber = isOwnProfile || isVerifiedSeller;
+const displayPhoneNumber = canViewPhoneNumber 
+    ? (profile?.phone_number || "Not Provided") 
+    : "Hidden";
   return (
     <HomeLayout>
 
@@ -230,7 +233,7 @@ function ProfilePage() {
               <p className="text-xs font-bold text-blue-600 mt-0.5">@{profile.username}</p>
             )}
             <p className="text-xs font-semibold text-slate-400 mt-0.5">{email}</p>
-            <p className="text-xs font-semibold text-slate-400 mt-0.5">{phoneNumber}</p>
+            <p className="text-xs font-semibold text-slate-400 mt-0.5">{displayPhoneNumber}</p>
 
             <div className="flex flex-wrap gap-2 justify-center mt-4">
               {isVerifiedSeller && isVerifiedBuyer ? (
