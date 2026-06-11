@@ -230,13 +230,16 @@ const handleGoogleLogin = async () => {
     }
   };
 
-  // FIX: Update this helper to use the userLocation state directly
-  const handleLocationBadgeClick = () => {
-    if (userLocation && userLocation !== "Invalid Location") {
-      // We use the state 'userLocation' instead of 'rawInput'
-      navigate(`/users?location=${encodeURIComponent(userLocation)}`);
-    }
-  };
+const handleLocationBadgeClick = () => {
+  // Check if location is invalid
+  if (userLocation === "Invalid Location" || !userLocation) {
+    // Navigate to verify page if location is missing/invalid
+    navigate("/verify");
+  } else {
+    // Navigate to users search with the valid location
+    navigate(`/users?location=${encodeURIComponent(userLocation)}`);
+  }
+};
 
   const userFullName =
     dbFullName ||
