@@ -1,6 +1,7 @@
 import React from 'react';
 import { HelpCircle, Search, CheckCircle2, BookOpen, Clock, MapPin } from 'lucide-react';
 import { Helmet } from 'react-helmet-async'; // Recommended for SEO
+import HomeLayout from '../Layouts/HomeLayout';
 
 function AskedQuestionPage() {
  const faqs = [
@@ -31,6 +32,9 @@ function AskedQuestionPage() {
 ];
 
   return (
+    <HomeLayout>
+
+    
     <div className="min-h-screen bg-slate-50 pt-10 pb-20">
       {/* SEO Metadata (If using react-helmet) */}
       <Helmet>
@@ -89,6 +93,7 @@ function AskedQuestionPage() {
   })}
 </script>
     </div>
+    </HomeLayout>
     
   );
 }

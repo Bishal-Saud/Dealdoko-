@@ -36,14 +36,14 @@ function Footer() {
               Tutoring Services
             </h4>
             <ul className="space-y-2.5 text-sm font-semibold">
-              <li>
+              {/* <li>
                 <Link
-                  to="/users?type=tutor"
+                  to="/blog"
                   className="text-slate-400 hover:text-white transition"
                 >
-                  Find Home Tutors Near You
+                  Blog
                 </Link>
-              </li>
+              </li> */}
               <li>
                 <Link
                   to="/recent-queries"

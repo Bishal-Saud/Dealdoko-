@@ -9,6 +9,7 @@ import LocationModal from "../model/LocationModel.jsx";
 import MapMark from "../components/MapMark.jsx";
 import BecomeATeacherAds from "../Ads/BecomeATeacherAds.jsx";
 import HomeTutorModel from "../model/HomeTutorModel.jsx";
+import ImportantQuestions from "../components/ImportantQuestions.jsx";
 
 function HomePage() {
  
@@ -55,7 +56,7 @@ if (loading) {
 <HomeTutorModel/>
          <MapMark />
 
-       
+      < ImportantQuestions />
       
       
         {/* PRODUCTS DIRECTORY GRID */}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { supabase } from "../api/supabase.js"; 
+import { supabase } from "../api/supabase.js";
 import {
   CheckCircle,
   Phone,
@@ -12,6 +12,7 @@ import {
   Users,
   GripHorizontal,
 } from "lucide-react";
+
 
 function HomeTutorModel() {
   const [products, setProducts] = useState([]);
@@ -45,7 +46,9 @@ function HomeTutorModel() {
         setErrorMsg(null);
 
         // 1. Fetch user profile location
-        const { data: { user } } = await supabase.auth.getUser();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
         if (!user) {
           throw new Error("Authentication session missing. Please sign in.");
         }
@@ -66,10 +69,12 @@ function HomeTutorModel() {
         // 2. Fetch verified local data matching current user's profile location
         const { data: productsData, error: productsError } = await supabase
           .from("products")
-          .select(`
+          .select(
+            `
             id, title, subject, target_class, price, timing, image_url, seller_name,
             profiles!inner (avatar_url, phone_number, rating, location_name, is_verified_seller)
-          `)
+          `,
+          )
           .eq("profiles.is_verified_seller", true)
           .eq("profiles.location_name", detectedLocation);
 
@@ -93,6 +98,23 @@ function HomeTutorModel() {
     startY.current = e.touches[0].clientY - dragOffset;
   };
 
+  const handleGoogleLogin = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          // This redirects them back to the exact page they were trying to view
+          redirectTo: window.location.origin, 
+        },
+      });
+      
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error logging in with Google:', error.message);
+      alert('Authentication failed. Please try again.');
+    }
+  };
+
   const handleTouchMove = (e) => {
     if (!isDragging.current) return;
     const currentOffset = e.touches[0].clientY - startY.current;
@@ -108,7 +130,7 @@ function HomeTutorModel() {
 
   // 1. Extract unique teachers, sort them by highest rating, and slice the Top 5
   const topTeachers = Array.from(
-    new Map(products.map((p) => [p.seller_name, p])).values()
+    new Map(products.map((p) => [p.seller_name, p])).values(),
   )
     .sort((a, b) => (b.profiles.rating || 0) - (a.profiles.rating || 0))
     .slice(0, 5);
@@ -144,17 +166,30 @@ function HomeTutorModel() {
 
   if (errorMsg) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-        <div className="bg-white border border-slate-200 rounded-xl p-6 max-w-sm w-full text-center shadow-sm">
-          <p className="text-sm text-red-600 font-bold mb-1">
-            Connection Issue
+      <div className=" bg-slate-50 flex items-center justify-center p-4">
+        <div className="bg-white border border-slate-200 rounded-2xl p-6 max-w-sm w-full text-center shadow-xs">
+          {/* Highlighted Tag */}
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-blue-50 text-blue-700 rounded-full text-[11px] font-bold uppercase tracking-wider mb-3">
+            Access Restricted
+          </span>
+
+          {/* Main Headline */}
+          <h3 className="text-base font-black text-slate-900 tracking-tight mb-1">
+            Login Now
+          </h3>
+
+          {/* Dynamic Description */}
+          <p className="text-xs text-slate-500 mb-5 leading-relaxed">
+            {errorMsg ||
+              "Please sign in to view qualified home teachers active near your neighborhood."}
           </p>
-          <p className="text-xs text-slate-500 mb-4">{errorMsg}</p>
+
+          {/* Action Button */}
           <button
-            onClick={() => window.location.reload()}
-            className="text-xs bg-slate-900 text-white font-bold py-2 px-4 rounded-lg hover:bg-slate-800 transition-colors"
+            onClick={handleGoogleLogin}
+            className="w-full text-xs bg-slate-900 text-white font-black py-3 px-4 rounded-xl hover:bg-slate-800 transition-colors cursor-pointer shadow-2xs"
           >
-            Retry Connection
+            Login to View Teachers
           </button>
         </div>
       </div>
@@ -234,7 +269,8 @@ function HomeTutorModel() {
                   : "text-slate-500 hover:bg-slate-50"
               }`}
             >
-              <BookOpen className="w-4 h-4" /> All Classes ({filteredBatches.length})
+              <BookOpen className="w-4 h-4" /> All Classes (
+              {filteredBatches.length})
             </button>
           </div>
         </div>
@@ -290,7 +326,10 @@ function HomeTutorModel() {
                 >
                   <div className="flex items-start gap-3">
                     <img
-                      src={teacher.profiles.avatar_url || "https://via.placeholder.com/150"}
+                      src={
+                        teacher.profiles.avatar_url ||
+                        "https://via.placeholder.com/150"
+                      }
                       alt=""
                       className="w-11 h-11 rounded-full object-cover"
                     />
@@ -341,7 +380,10 @@ function HomeTutorModel() {
                   >
                     <div className="h-32 bg-slate-100 relative">
                       <img
-                        src={batch.image_url || "https://via.placeholder.com/400x200"}
+                        src={
+                          batch.image_url ||
+                          "https://via.placeholder.com/400x200"
+                        }
                         alt=""
                         className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-300"
                       />
@@ -381,7 +423,8 @@ function HomeTutorModel() {
                         onClick={(e) => e.stopPropagation()}
                         className="mt-5 w-full flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs py-2.5 rounded-xl transition-colors"
                       >
-                        <Phone className="w-3.5 h-3.5 fill-white/10" /> Call Educator
+                        <Phone className="w-3.5 h-3.5 fill-white/10" /> Call
+                        Educator
                       </a>
                     </div>
                   </div>
@@ -408,7 +451,10 @@ function HomeTutorModel() {
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <img
-                      src={teacher.profiles.avatar_url || "https://via.placeholder.com/150"}
+                      src={
+                        teacher.profiles.avatar_url ||
+                        "https://via.placeholder.com/150"
+                      }
                       alt=""
                       className="w-10 h-10 rounded-full object-cover"
                     />
@@ -447,7 +493,8 @@ function HomeTutorModel() {
               {selectedTeacher && (
                 <div className="flex items-center justify-between bg-indigo-50 border border-indigo-100 p-3 rounded-xl mx-0.5">
                   <p className="text-xs text-indigo-700 font-medium">
-                    Filtering listings by <span className="font-bold">{selectedTeacher}</span>
+                    Filtering listings by{" "}
+                    <span className="font-bold">{selectedTeacher}</span>
                   </p>
                   <button
                     onClick={() => setSelectedTeacher(null)}
@@ -476,7 +523,10 @@ function HomeTutorModel() {
                       <div>
                         <div className="flex gap-3 items-start">
                           <img
-                            src={batch.image_url || "https://via.placeholder.com/150"}
+                            src={
+                              batch.image_url ||
+                              "https://via.placeholder.com/150"
+                            }
                             alt=""
                             className="w-14 h-14 rounded-xl object-cover bg-slate-50 shrink-0"
                           />
@@ -496,7 +546,9 @@ function HomeTutorModel() {
                         <div className="flex items-baseline justify-between mt-4">
                           <p className="text-base font-extrabold text-slate-900">
                             Rs {batch.price.toLocaleString()}
-                            <span className="text-[10px] font-normal text-slate-400">/mo</span>
+                            <span className="text-[10px] font-normal text-slate-400">
+                              /mo
+                            </span>
                           </p>
                         </div>
 
@@ -517,7 +569,8 @@ function HomeTutorModel() {
                         onClick={(e) => e.stopPropagation()}
                         className="w-full mt-4 flex items-center justify-center gap-2 bg-slate-900 text-white font-bold text-xs py-2.5 rounded-xl shadow-sm"
                       >
-                        <Phone className="w-3.5 h-3.5 fill-white/10" /> Call Educator
+                        <Phone className="w-3.5 h-3.5 fill-white/10" /> Call
+                        Educator
                       </a>
                     </div>
                   ))}

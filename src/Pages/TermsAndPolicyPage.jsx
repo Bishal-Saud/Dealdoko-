@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
-import { ShieldCheck, FileText, Scale, Eye, ChevronRight, ArrowLeft, GraduationCap, MapPin } from 'lucide-react';
+import { ShieldCheck, FileText, Scale, Eye, HeartHandshake, CheckCircle2 } from 'lucide-react';
+import HomeLayout from '../Layouts/HomeLayout';
 
 function TermsAndPolicyPage() {
-  const [activeTab, setActiveTab] = useState('terms'); // 'terms' or 'privacy'
+  const [activeTab, setActiveTab] = useState('terms'); // 'terms', 'privacy', or 'safety'
 
   const lastUpdated = "June 2026";
 
   return (
+    <HomeLayout>
+
+   
     <div className="min-h-screen bg-slate-50/50 text-slate-800 antialiased py-12 px-4 sm:px-6 lg:px-8">
       {/* Brand & Header Section */}
       <div className="max-w-4xl mx-auto text-center mb-10">
@@ -14,7 +18,7 @@ function TermsAndPolicyPage() {
           <ShieldCheck size={14} className="text-blue-600" /> Trust & Legal Center
         </div>
         <h1 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight">
-          Terms of Service & Privacy Policy
+          Terms, Privacy & Safety Center
         </h1>
         <p className="text-sm text-slate-500 mt-2 font-medium">
           Our commitment to keeping the local student and home tutor community safe and transparent.
@@ -26,7 +30,7 @@ function TermsAndPolicyPage() {
 
       {/* Tab Switcher Interface */}
       <div className="max-w-4xl mx-auto mb-8">
-        <div className="bg-white p-1.5 rounded-2xl border border-slate-200/60 shadow-2xs flex gap-2">
+        <div className="bg-white p-1.5 rounded-2xl border border-slate-200/60 shadow-2xs flex flex-col sm:flex-row gap-2">
           <button
             onClick={() => setActiveTab('terms')}
             className={`flex-1 py-3 px-4 rounded-xl text-xs md:text-sm font-black transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer ${
@@ -38,6 +42,7 @@ function TermsAndPolicyPage() {
             <Scale size={16} />
             <span>Terms of Service</span>
           </button>
+          
           <button
             onClick={() => setActiveTab('privacy')}
             className={`flex-1 py-3 px-4 rounded-xl text-xs md:text-sm font-black transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer ${
@@ -49,12 +54,24 @@ function TermsAndPolicyPage() {
             <Eye size={16} />
             <span>Privacy Policy</span>
           </button>
+
+          <button
+            onClick={() => setActiveTab('safety')}
+            className={`flex-1 py-3 px-4 rounded-xl text-xs md:text-sm font-black transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer ${
+              activeTab === 'safety'
+                ? 'bg-slate-900 text-white shadow-sm'
+                : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+            }`}
+          >
+            <HeartHandshake size={16} />
+            <span>Safety & Trial Policy</span>
+          </button>
         </div>
       </div>
 
       {/* Dynamic Content Container */}
       <main className="max-w-4xl mx-auto bg-white border border-slate-200/60 rounded-3xl p-6 md:p-10 shadow-xs">
-        {activeTab === 'terms' ? (
+        {activeTab === 'terms' && (
           /* TERMS OF SERVICE CONTENT */
           <div className="space-y-8 animate-fadeIn">
             <div className="border-b border-slate-100 pb-4">
@@ -100,7 +117,9 @@ function TermsAndPolicyPage() {
               </p>
             </section>
           </div>
-        ) : (
+        )}
+
+        {activeTab === 'privacy' && (
           /* PRIVACY POLICY CONTENT */
           <div className="space-y-8 animate-fadeIn">
             <div className="border-b border-slate-100 pb-4">
@@ -151,6 +170,75 @@ function TermsAndPolicyPage() {
             </section>
           </div>
         )}
+
+        {activeTab === 'safety' && (
+          /* SAFETY & TRIAL POLICY CONTENT */
+          <div className="space-y-8 animate-fadeIn">
+            <div className="border-b border-slate-100 pb-4">
+              <h2 className="text-xl font-black text-slate-900 flex items-center gap-2">
+                <HeartHandshake className="text-rose-600" size={20} /> Safety & Trial Policy
+              </h2>
+              <p className="text-xs text-slate-400 mt-1">Our core guidelines for ensuring a secure and satisfactory teaching match.</p>
+            </div>
+
+            <div className="p-4 bg-rose-50 border border-rose-100 rounded-2xl space-y-3">
+              <h3 className="text-xs font-bold text-rose-800 uppercase tracking-wide">
+                Crucial Parent Recommendation
+              </h3>
+              <p className="text-xs md:text-sm text-rose-700 leading-relaxed font-medium">
+                We strongly advise against making full, upfront milestone payments before verifying the teacher's capability and compatibility. Protect your funds and confirm educational quality first.
+              </p>
+            </div>
+
+            <section className="space-y-4">
+              <h3 className="text-sm font-black uppercase tracking-wider text-slate-400">
+                Onboarding & Evaluation Roadmap
+              </h3>
+              
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="p-4 border border-slate-100 rounded-xl bg-slate-50/50 flex gap-3">
+                  <CheckCircle2 className="text-blue-600 shrink-0 mt-0.5" size={16} />
+                  <div>
+                    <h4 className="text-xs md:text-sm font-black text-slate-800">1. Start with a Trial Period</h4>
+                    <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                      We highly recommend structuring a short initial window (such as a 2-day trial or 1–3 introductory classes) before finalizing any long-term arrangement.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="p-4 border border-slate-100 rounded-xl bg-slate-50/50 flex gap-3">
+                  <CheckCircle2 className="text-blue-600 shrink-0 mt-0.5" size={16} />
+                  <div>
+                    <h4 className="text-xs md:text-sm font-black text-slate-800">2. Actively Gather Student Feedback</h4>
+                    <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                      Parents are encouraged to sit with or evaluate teaching quality and openly request feedback from their child immediately after the trial classes conclude.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="p-4 border border-slate-100 rounded-xl bg-slate-50/50 flex gap-3">
+                  <CheckCircle2 className="text-blue-600 shrink-0 mt-0.5" size={16} />
+                  <div>
+                    <h4 className="text-xs md:text-sm font-black text-slate-800">3. Evaluate and Decide</h4>
+                    <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                      Based on your child's learning comfort, choose to securely continue payments or seamlessly shift tracking parameters to find a better matching tutor profile.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="p-4 border border-slate-100 rounded-xl bg-slate-50/50 flex gap-3">
+                  <CheckCircle2 className="text-blue-600 shrink-0 mt-0.5" size={16} />
+                  <div>
+                    <h4 className="text-xs md:text-sm font-black text-slate-800">4. Secure Learning Environments</h4>
+                    <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                      For overall safety, all early introduction sessions or classes should be exclusively held inside the student's home with family members actively present or within other deeply trusted community spaces.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+        )}
       </main>
 
       {/* Clean Utility Footer */}
@@ -160,6 +248,7 @@ function TermsAndPolicyPage() {
         </p>
       </div>
     </div>
+     </HomeLayout>
   );
 }
 
