@@ -1,16 +1,14 @@
 import React from "react";
 import { Helmet } from "react-helmet-async"; 
 import HomeLayout from "../Layouts/HomeLayout";
-import ListingProducts from "../components/ListingProducts.jsx";
-import TolPath from "../components/TolPath.jsx";
 import { AlertCircle, Terminal, CheckCircle2, ShieldCheck, Users } from "lucide-react";
 import SocialMedia from "../components/SocialMedia.jsx";
 import Warning from "../components/Warning.jsx";
-
 import { useAuth } from "../context/AuthProvider.jsx"; 
 import LocationModal from "../model/LocationModel.jsx"; 
 import MapMark from "../components/MapMark.jsx";
 import BecomeATeacherAds from "../Ads/BecomeATeacherAds.jsx";
+import HomeTutorModel from "../model/HomeTutorModel.jsx";
 
 function HomePage() {
  
@@ -37,6 +35,8 @@ if (loading) {
 
 {user && <BecomeATeacherAds/>}
    
+   
+
       <LocationModal user={user} />
 
       <main className="max-w-7xl mx-auto px-4 mt-4 md:mt-8 space-y-6 md:space-y-10">
@@ -52,13 +52,14 @@ if (loading) {
           </p>
         </section>
 
+<HomeTutorModel/>
          <MapMark />
 
-        {/* GEOLOCATION TUTOR SEARCH SEGMENT */}
-        {/* <TolPath /> */}
+       
+      
       
         {/* PRODUCTS DIRECTORY GRID */}
-        <ListingProducts />
+        {/* <ListingProducts /> */}
         
         <SocialMedia/>
       </main>

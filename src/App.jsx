@@ -16,6 +16,7 @@ import ContactSellerPage from './Pages/ContactSellerPage.jsx'
 import EditProfilePage from './Pages/EditProfilePage.jsx'
 import NotFound from './context/NotFound.jsx'
 
+
 function App() {
   return (
     <>
@@ -33,6 +34,7 @@ function App() {
         <Route path='/edit-profile' element={<EditProfilePage />} />
         <Route path='/recent-queries' element={<AskedQuestionPage />} />
         <Route path='/book-tutor/:courseId' element={<ContactSellerPage />} />
+      
 
         {/* Protected Merchant Console Routes */}
         <Route 

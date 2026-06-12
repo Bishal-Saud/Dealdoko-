@@ -4,7 +4,7 @@ import toast, { Toaster } from "react-hot-toast";
 import { User, Mail, Smartphone, Upload, Loader2, KeyRound } from "lucide-react";
 import HomeLayout from "../Layouts/HomeLayout.jsx";
 
-function SettingsPage() {
+function EditProfilePage() {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   
@@ -331,4 +331,4 @@ function SettingsPage() {
   );
 }
 
-export default SettingsPage;
+export default EditProfilePage;

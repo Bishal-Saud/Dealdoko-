@@ -61,7 +61,7 @@ function Header() {
       // 1. Fetch as an array, NO .single()
       const { data, error } = await supabase
         .from("profiles")
-        .select("is_verified_seller, location, full_name, avatar_url")
+        .select("is_verified_seller, location_name, full_name, avatar_url")
         .eq("id", userId);
 
       if (error) {
@@ -73,7 +73,7 @@ function Header() {
       if (data && data.length > 0) {
         const profile = data[0];
         setIsVerifiedSeller(!!profile.is_verified_seller);
-        setUserLocation(profile.location || "Invalid Location");
+        setUserLocation(profile.location_name || "Invalid Location");
         setDbFullName(profile.full_name || "");
         setDbAvatarUrl(profile.avatar_url || "");
       }
@@ -217,7 +217,7 @@ const handleGoogleLogin = async () => {
     const rawInput = searchQuery.trim();
     if (!rawInput) return;
 
-    const locationPrefixRegex = /^(loc|location):\s*(.*)/i;
+    const locationPrefixRegex = /^(loc|location_name):\s*(.*)/i;
     const match = rawInput.match(locationPrefixRegex);
 
     if (match) {
@@ -309,7 +309,10 @@ const handleLocationBadgeClick = () => {
                       : "text-gray-700 font-bold"
                   }
                 >
-                  {userLocation}
+                  {userLocation 
+  ? (userLocation.length > 15 ? `${userLocation.substring(0, 15)}...` : userLocation)
+  : "Detecting Location..."
+}
                 </span>
 
                 <span className="text-[10px]">▼</span>
