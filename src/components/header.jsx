@@ -493,7 +493,7 @@ const handleLocationBadgeClick = () => {
       {isSidebarOpen && (
         <div className="fixed inset-0 z-50 flex justify-end">
           <div
-            className="absolute inset-0 bg-slate-900/40 backdrop-blur-xs"
+            className="absolute inset-0 bg-blue-900/40 backdrop-blur-xs"
             onClick={() => setIsSidebarOpen(false)}
           />
 
@@ -617,7 +617,7 @@ const handleLocationBadgeClick = () => {
       {/* AUTH MODAL */}
 
       {isAuthOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-blue-600/50 backdrop-blur-xs">
           <div className="relative w-full max-w-sm bg-white rounded-3xl shadow-2xl p-6 md:p-8 text-center">
             <button
               onClick={() => setIsAuthOpen(false)}

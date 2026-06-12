@@ -20,7 +20,7 @@ function SellerDashboardPage() {
       <Toaster />
 
       {/* SIDEBAR */}
-      <aside className="w-full md:w-64 bg-slate-900 text-white p-6 flex flex-col gap-6 shrink-0 shadow-lg">
+      <aside className="w-full md:w-64 bg-blue-600 text-white p-6 flex flex-col gap-6 shrink-0 shadow-lg">
         <Link to ="/">
           <h2 className="text-xl font-black tracking-tight text-amber-400 flex items-center gap-2">
             Tol Path <Sparkles size={16} />

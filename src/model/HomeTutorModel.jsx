@@ -187,7 +187,7 @@ function HomeTutorModel() {
           {/* Action Button */}
           <button
             onClick={handleGoogleLogin}
-            className="w-full text-xs bg-slate-900 text-white font-black py-3 px-4 rounded-xl hover:bg-slate-800 transition-colors cursor-pointer shadow-2xs"
+            className="w-full text-xs bg-blue-600 text-white font-black py-3 px-4 rounded-xl hover:bg-slate-800 transition-colors cursor-pointer shadow-2xs"
           >
             Login to View Teachers
           </button>
@@ -255,7 +255,7 @@ function HomeTutorModel() {
               onClick={() => setMobileActiveTab("tutors")}
               className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold rounded-xl transition-all ${
                 mobileActiveTab === "tutors"
-                  ? "bg-slate-900 text-white shadow-sm"
+                  ? "bg-blue-600 text-white shadow-sm"
                   : "text-slate-500 hover:bg-slate-50"
               }`}
             >
@@ -265,7 +265,7 @@ function HomeTutorModel() {
               onClick={() => setMobileActiveTab("batches")}
               className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold rounded-xl transition-all ${
                 mobileActiveTab === "batches"
-                  ? "bg-slate-900 text-white shadow-sm"
+                  ? "bg-blue-600 text-white shadow-sm"
                   : "text-slate-500 hover:bg-slate-50"
               }`}
             >
@@ -421,7 +421,7 @@ function HomeTutorModel() {
                       <a
                         href={`tel:${batch.profiles.phone_number}`}
                         onClick={(e) => e.stopPropagation()}
-                        className="mt-5 w-full flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs py-2.5 rounded-xl transition-colors"
+                        className="mt-5 w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-slate-800 text-white font-bold text-xs py-2.5 rounded-xl transition-colors"
                       >
                         <Phone className="w-3.5 h-3.5 fill-white/10" /> Call
                         Educator
@@ -567,7 +567,7 @@ function HomeTutorModel() {
                       <a
                         href={`tel:${batch.profiles.phone_number}`}
                         onClick={(e) => e.stopPropagation()}
-                        className="w-full mt-4 flex items-center justify-center gap-2 bg-slate-900 text-white font-bold text-xs py-2.5 rounded-xl shadow-sm"
+                        className="w-full mt-4 flex items-center justify-center gap-2 bg-blue-600 text-white font-bold text-xs py-2.5 rounded-xl shadow-sm"
                       >
                         <Phone className="w-3.5 h-3.5 fill-white/10" /> Call
                         Educator

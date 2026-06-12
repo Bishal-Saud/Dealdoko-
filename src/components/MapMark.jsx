@@ -223,7 +223,7 @@ function MapMark() {
 
      <button 
   onClick={() => window.location.href = `/profile/${selectedTeacher.id}`}
-  className="p-2.5 bg-slate-900 hover:bg-blue-600 text-white rounded-xl transition cursor-pointer active:scale-95 flex-shrink-0 shadow-xs"
+  className="p-2.5 bg-blue-600 hover:bg-blue-600 text-white rounded-xl transition cursor-pointer active:scale-95 flex-shrink-0 shadow-xs"
   title="View Teacher Profile"
 >
   <User size={14} />

@@ -338,14 +338,14 @@ const displayPhoneNumber = canViewPhoneNumber
               {isVerifiedSeller && (
   <button 
     onClick={() => setActiveTab('teaching')}
-    className={`flex-1 py-2 rounded-xl text-xs font-black transition ${activeTab === 'teaching' ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-500 hover:bg-slate-50'}`}
+    className={`flex-1 py-2 rounded-xl text-xs font-black transition ${activeTab === 'teaching' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-500 hover:bg-slate-50'}`}
   >
     Academic Classes
   </button>
 )}
               <button 
                 onClick={() => setActiveTab('overview')}
-                className={`flex-1 py-2 rounded-xl text-xs font-black transition ${activeTab === 'overview' ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-500 hover:bg-slate-50'}`}
+                className={`flex-1 py-2 rounded-xl text-xs font-black transition ${activeTab === 'overview' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-500 hover:bg-slate-50'}`}
               >
                 F2F Deal Overviews
               </button>

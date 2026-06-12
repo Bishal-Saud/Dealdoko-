@@ -372,7 +372,7 @@ function ListingProducts() {
                             alt={course.title}
                             className="w-full h-full object-cover"
                           />
-                          <span className="absolute bottom-1 left-1 bg-slate-900/80 text-white text-[8px] font-black px-1.5 py-0.5 rounded">
+                          <span className="absolute bottom-1 left-1 bg-blue-600/80 text-white text-[8px] font-black px-1.5 py-0.5 rounded">
                             {course.target_class || "General"}
                           </span>
                         </div>
@@ -415,7 +415,7 @@ function ListingProducts() {
                         )}
                         <button
                           onClick={() => navigate(`/profile/${course.seller_id}`)}
-                          className="py-1 bg-slate-900 hover:bg-slate-800 text-white rounded-md text-[9px] font-black flex items-center justify-center transition"
+                          className="py-1 bg-blue-600 hover:bg-slate-800 text-white rounded-md text-[9px] font-black flex items-center justify-center transition"
                         >
                           View Bio
                         </button>

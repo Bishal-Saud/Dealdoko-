@@ -176,7 +176,7 @@ function RolePage() {
       <button
         onClick={handleApplyTutor}
         disabled={submitting}
-        className="w-full mt-6 py-3 bg-slate-900 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2"
+        className="w-full mt-6 py-3 bg-blue-600 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2"
       >
         {submitting ? (
           <Loader2 className="animate-spin w-4 h-4" />

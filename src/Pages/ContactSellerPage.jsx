@@ -494,7 +494,7 @@ function ContactSellerPage() {
                     <button
                       type="submit"
                       disabled={submittingReview}
-                      className="w-full py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-black rounded-xl transition shadow-xs disabled:opacity-50"
+                      className="w-full py-2 bg-blue-600 hover:bg-blue-800 text-white text-xs font-black rounded-xl transition shadow-xs disabled:opacity-50"
                     >
                       {submittingReview ? "Processing Metric Entry..." : "Commit Verified Review Entry"}
                     </button>

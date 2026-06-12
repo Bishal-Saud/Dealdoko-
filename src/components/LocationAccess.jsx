@@ -31,7 +31,7 @@ function LocationAccess() {
 
             </div>
 
-            <Link to="/verify" className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-black rounded-xl transition flex items-center gap-1.5 shrink-0 shadow-sm">
+            <Link to="/verify" className="px-5 py-2.5 bg-blue-600 hover:bg-slate-800 text-white text-xs font-black rounded-xl transition flex items-center gap-1.5 shrink-0 shadow-sm">
 
               <span>Add Your Location</span>
 

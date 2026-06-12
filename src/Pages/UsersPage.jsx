@@ -144,7 +144,7 @@ function UsersPage() {
                   {/* Action Button */}
                   <Link 
                     to={`/profile/${profile.id}`} 
-                    className="w-full text-center py-3 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-blue-600 transition"
+                    className="w-full text-center py-3 bg-blue-600 text-white rounded-xl text-xs font-bold hover:bg-blue-600 transition"
                   >
                     View Full Profile
                   </Link>

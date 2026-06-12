@@ -328,7 +328,7 @@ function LiveChatModal({ productId, sellerId, buyerId, authenticatedUserId, onCl
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-0 md:p-4 bg-slate-900/60 backdrop-blur-xs">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-0 md:p-4 bg-blue-600/60 backdrop-blur-xs">
       <div className="w-full max-w-5xl bg-white h-full md:h-[85vh] md:rounded-3xl shadow-2xl overflow-hidden flex flex-col">
         
         {/* TOP HEADER */}

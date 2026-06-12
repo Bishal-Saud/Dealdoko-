@@ -35,7 +35,7 @@ function TermsAndPolicyPage() {
             onClick={() => setActiveTab('terms')}
             className={`flex-1 py-3 px-4 rounded-xl text-xs md:text-sm font-black transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer ${
               activeTab === 'terms'
-                ? 'bg-slate-900 text-white shadow-sm'
+                ? 'bg-blue-600 text-white shadow-sm'
                 : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
             }`}
           >
@@ -47,8 +47,8 @@ function TermsAndPolicyPage() {
             onClick={() => setActiveTab('privacy')}
             className={`flex-1 py-3 px-4 rounded-xl text-xs md:text-sm font-black transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer ${
               activeTab === 'privacy'
-                ? 'bg-slate-900 text-white shadow-sm'
-                : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+                ? 'bg-blue-600 text-white shadow-sm'
+                : 'text-blue-500 hover:text-blue-900 hover:bg-blue-50'
             }`}
           >
             <Eye size={16} />
@@ -59,7 +59,7 @@ function TermsAndPolicyPage() {
             onClick={() => setActiveTab('safety')}
             className={`flex-1 py-3 px-4 rounded-xl text-xs md:text-sm font-black transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer ${
               activeTab === 'safety'
-                ? 'bg-slate-900 text-white shadow-sm'
+                ? 'bg-blue-600 text-white shadow-sm'
                 : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
             }`}
           >

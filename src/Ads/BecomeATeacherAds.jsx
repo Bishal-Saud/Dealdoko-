@@ -137,7 +137,7 @@ function BecomeATeacherAds() {
               window.location.href = '/role'; 
               setIsVisible(false);
             }}
-            className="w-full bg-slate-900 hover:bg-slate-800 text-white font-medium py-2 px-4 rounded-lg text-xs transition-colors duration-150 shadow-sm"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg text-xs transition-colors duration-150 shadow-sm"
           >
             {t.cta}
           </button>
