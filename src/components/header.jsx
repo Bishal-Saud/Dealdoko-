@@ -85,36 +85,34 @@ function Header() {
   // Listen to Auth status changes
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      const user = session?.user ?? null;
+  const {
+    data: { subscription },
+  } = supabase.auth.onAuthStateChange((_event, session) => {
+    const user = session?.user ?? null;
 
-      setCurrentUser(user);
+    setCurrentUser(user);
 
-      if (user) fetchUserProfileData(user.id);
-    });
+    if (user) {
+      (async () => {
+        await supabase.from("profiles").upsert({
+          id: user.id,
+          full_name: user.user_metadata?.full_name,
+          avatar_url: user.user_metadata?.avatar_url,
+          email: user.email,
+        });
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      const user = session?.user ?? null;
-
-      setCurrentUser(user);
-
-      if (user) {
         fetchUserProfileData(user.id);
-      } else {
-        setIsVerifiedSeller(false);
+      })(); 
+    } else {
+      setIsVerifiedSeller(false);
+      setUserLocation("Invalid Location");
+      setDbFullName("");
+      setDbAvatarUrl("");
+    }
+  });
 
-        setUserLocation("Invalid Location");
-
-        setDbFullName("");
-
-        setDbAvatarUrl("");
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+  return () => subscription.unsubscribe();
+}, []);
 
   // REALTIME SUBSCRIPTION for messages
 
@@ -164,7 +162,6 @@ const handleGoogleLogin = async () => {
       provider: "google",
       options: {
         redirectTo: window.location.origin,
-        // Add this queryParams block
         queryParams: {
           prompt: 'select_account',
         },
