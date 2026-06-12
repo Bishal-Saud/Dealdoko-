@@ -4,6 +4,7 @@ import { ArrowLeft, MapPin, GraduationCap, CheckCircle2, PhoneCall, Calendar, Sh
 import { supabase } from "../api/supabase.js";
 import LiveChatModal from "../model/LiveChatModel.jsx";
 import toast, { Toaster } from "react-hot-toast";
+import HomeLayout from "../Layouts/HomeLayout.jsx";
 
 function ContactSellerPage() {
   const { courseId } = useParams(); // Safely extract UUID from /book-tutor/:courseId
@@ -258,6 +259,9 @@ function ContactSellerPage() {
   const sellerLocation = product.location || product.tutor_profile?.location_name || "Nepal";
 
   return (
+    <HomeLayout>
+
+
     <div className="max-w-5xl mx-auto px-2 py-4 animate-in fade-in duration-200">
       <Toaster />
       
@@ -526,6 +530,7 @@ function ContactSellerPage() {
         />
       )}
     </div>
+        </HomeLayout>
   );
 }
 
