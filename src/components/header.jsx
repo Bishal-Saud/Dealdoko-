@@ -61,7 +61,7 @@ function Header() {
       // 1. Fetch as an array, NO .single()
       const { data, error } = await supabase
         .from("profiles")
-        .select("is_verified_seller, location_name, full_name, avatar_url")
+        .select("is_verified_seller,location, location_name, full_name, avatar_url")
         .eq("id", userId);
 
       if (error) {
@@ -73,7 +73,7 @@ function Header() {
       if (data && data.length > 0) {
         const profile = data[0];
         setIsVerifiedSeller(!!profile.is_verified_seller);
-        setUserLocation(profile.location_name || "Invalid Location");
+        setUserLocation(profile.location );
         setDbFullName(profile.full_name || "");
         setDbAvatarUrl(profile.avatar_url || "");
       }

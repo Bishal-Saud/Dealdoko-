@@ -1,17 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../api/supabase.js'; 
-import { ShieldCheck, MapPin, Phone, CheckCircle2, Clock, UserCheck, Navigation, AlertTriangle } from 'lucide-react';
+import { ShieldCheck, MapPin, Phone, CheckCircle2, Clock, UserCheck, Navigation, AlertTriangle, Building2 } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import HomeLayout from '../Layouts/HomeLayout.jsx';
 
 function VerificationPage() {
   const [user, setUser] = useState(null);
-  const [kycStatus, setKycStatus] = useState('unverified'); // unverified, pending, verified, rejected
+  const [kycStatus, setKycStatus] = useState('unverified'); 
   const [submitting, setSubmitting] = useState(false);
 
   // Form Fields
   const [phoneNumber, setPhoneNumber] = useState('');
   const [countryCode, setCountryCode] = useState('+977');
+  const [locationDescription, setLocationDescription] = useState(''); 
   
   // Geolocation Tracking & Accountability States
   const [district, setDistrict] = useState('');
@@ -37,30 +38,35 @@ function VerificationPage() {
   const fetchCurrentVerificationStatus = async (userId) => {
     const { data, error } = await supabase
       .from('profiles')
-      .select('verification_status, phone_number, location, latitude, longitude')
+      .select('verification_status, phone_number, location_name, location, location_description, latitude, longitude')
       .eq('id', userId)
       .single();
 
     if (data) {
       setKycStatus(data.verification_status || 'unverified');
       if (data.phone_number) {
-        // If the stored phone number contains a country code, strip it for the input field
         const cleanPhone = data.phone_number.replace(/^\+977/, '');
         setPhoneNumber(cleanPhone);
       }
       if (data.latitude) setLatitude(data.latitude);
       if (data.longitude) setLongitude(data.longitude);
-      if (data.location) {
-        const parts = data.location.split(',');
+      if (data.location_description) setLocationDescription(data.location_description);
+      
+      // Strict fallback parsing block
+      const rawLocation = data.location_name || data.location;
+      if (rawLocation && typeof rawLocation === 'string' && !rawLocation.includes('[object')) {
+        const parts = rawLocation.split(',');
         if (parts.length >= 2) {
           setCityLocation(parts[0].trim());
           setDistrict(parts[1].trim());
+        } else {
+          setCityLocation(rawLocation);
         }
       }
     }
   };
 
-  // Automatically fetch coordinates on component mount if user is unverified or rejected
+  // Safe tracking synchronization layout 
   useEffect(() => {
     if ((kycStatus === 'unverified' || kycStatus === 'rejected') && !latitude && !longitude) {
       handleGetCurrentLocation(false); 
@@ -90,8 +96,8 @@ function VerificationPage() {
             const detectedCity = data.address.suburb || data.address.neighbourhood || data.address.city_district || data.address.town || data.address.village || 'Near Me';
             const detectedDistrict = data.address.county || data.address.state || 'Nepal';
             
-            setCityLocation(detectedCity);
-            setDistrict(detectedDistrict.replace('District', '').trim());
+            setCityLocation(String(detectedCity));
+            setDistrict(String(detectedDistrict).replace('District', '').trim());
           }
         } catch (err) {
           console.error("Error reading reverse location coordinates:", err);
@@ -116,28 +122,35 @@ function VerificationPage() {
     if (!latitude || !longitude) return toast.error('Please unlock your live physical coordinates map pin before submitting.');
 
     setSubmitting(true);
-    try {
-      const fullLocationString = cityLocation && district ? `${cityLocation}, ${district}` : "Verified Physical Location";
-      const fullPhoneNumber = `${countryCode}${phoneNumber}`;
 
-      // Updates profile verification state back to 'pending' for admin review
+    // Completely isolated immutable string compilation parameters
+    const finalCity = cityLocation ? String(cityLocation).trim() : "Unknown City";
+    const finalDistrict = district ? String(district).trim() : "Nepal";
+    const absoluteLocationString = `${finalCity}, ${finalDistrict}`;
+    const fullPhoneNumber = `${countryCode}${phoneNumber}`;
+    const targetDescription = locationDescription ? String(locationDescription).trim() : "";
+
+    try {
+      // Direct update verification transaction layout 
       const { error: profileError } = await supabase
         .from('profiles')
         .upsert({
           id: user.id,
           phone_number: fullPhoneNumber,
-          location: fullLocationString,
-          latitude: latitude,   
-          longitude: longitude, 
+          location: absoluteLocationString,
+          location_name: absoluteLocationString, // Pure structural string delivery 
+          location_description: targetDescription, 
+          latitude: Number(latitude),   
+          longitude: Number(longitude), 
           verification_status: 'pending' 
-        });
+        }, { onConflict: 'id' }); // Strict key targeting override configuration
 
       if (profileError) throw profileError;
 
       setKycStatus('pending');
       toast.success('Verification submitted! Review in progress.', { duration: 5000 });
     } catch (error) {
-      console.error(error);
+      console.error("Supabase Save Error Details:", error);
       toast.error(error.message || 'Submission error occurred.');
     } finally {
       setSubmitting(false);
@@ -150,7 +163,6 @@ function VerificationPage() {
         <Toaster />
         <div className="max-w-2xl mx-auto bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden">
           
-          {/* Top Branding Banner Header */}
           <div className="bg-linear-to-r from-slate-900 to-slate-800 p-6 text-white flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="p-2.5 bg-white/10 rounded-xl backdrop-blur-md text-blue-400">
@@ -162,7 +174,6 @@ function VerificationPage() {
               </div>
             </div>
             
-            {/* Status Badge Display */}
             <div>
               {kycStatus === 'unverified' && <span className="bg-slate-700 text-slate-200 text-xs font-bold px-3 py-1.5 rounded-full border border-slate-600">Unverified</span>}
               {kycStatus === 'rejected' && <span className="bg-rose-500/20 text-rose-500 text-xs font-bold px-3 py-1.5 rounded-full border border-rose-500/30 flex items-center gap-1">Rejected</span>}
@@ -171,7 +182,6 @@ function VerificationPage() {
             </div>
           </div>
 
-          {/* CONDITION STATE PANEL RENDERS */}
           {kycStatus === 'pending' && (
             <div className="p-8 text-center space-y-4">
               <div className="w-16 h-16 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center mx-auto border border-amber-100 animate-pulse">
@@ -206,6 +216,7 @@ function VerificationPage() {
 
               <div className="pt-4">
                 <button
+                  type="button"
                   onClick={() => window.location.href = "/"}
                   className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm rounded-xl shadow-md transition"
                 >
@@ -215,7 +226,6 @@ function VerificationPage() {
             </div>
           )}
 
-          {/* SHOW FORM IF UNVERIFIED OR REJECTED */}
           {(kycStatus === 'unverified' || kycStatus === 'rejected') && (
             <form onSubmit={handleSubmitVerification} className="p-6 md:p-8 space-y-6">
               
@@ -233,7 +243,6 @@ function VerificationPage() {
                 </div>
               )}
               
-              {/* Field Section: WhatsApp Contact */}
               <div className="space-y-3">
                 <h4 className="text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
                   <Phone size={16} className="text-green-500" /> WhatsApp Contact
@@ -266,7 +275,6 @@ function VerificationPage() {
                 )}
               </div>
 
-              {/* Field Section: Physical Geographic Locations Mapping */}
               <div className="space-y-4 pt-2 border-t border-slate-100">
                 <div className="flex items-center justify-between">
                   <h4 className="text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
@@ -284,12 +292,11 @@ function VerificationPage() {
                 </div>
                 
                 <p className="text-xs text-slate-400 leading-relaxed">
-                  Our platform parses your explicit coordinate anchor layout map structure automatically to keep P2P target tracking transparent.
+                  Our platform parses your explicit coordinate anchor layout map structure automatically to keep P2P tracking transparent.
                 </p>
 
-                {/* LIVE MAP IFRAME CONTAINER */}
                 {latitude && longitude ? (
-                  <div className="space-y-2">
+                  <div className="space-y-4">
                     <div className="w-full h-56 bg-slate-100 rounded-2xl overflow-hidden border border-slate-200 shadow-inner relative">
                       <iframe
                         title="User Live Verification Coordinates Map"
@@ -310,6 +317,24 @@ function VerificationPage() {
                         </span>
                       </div>
                     )}
+
+                    <div className="space-y-2 pt-2">
+                      <label className="text-xs font-black text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                        <Building2 size={14} className="text-slate-500" /> Landmark / Location Details
+                      </label>
+                      <input 
+                        type="text"
+                        required
+                        placeholder="e.g., Near Dharahara, opposite to school, near Kamal Pokhari"
+                        value={locationDescription}
+                        onChange={(e) => setLocationDescription(e.target.value)}
+                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium outline-none focus:border-blue-500 transition shadow-xs"
+                      />
+                      <p className="text-[11px] text-slate-400">
+                        Provide a clear local landmark so community members can easily spot or reach your physical location boundaries.
+                      </p>
+                    </div>
+
                   </div>
                 ) : (
                   <div className="p-8 border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50/50 text-center space-y-2">
@@ -329,7 +354,6 @@ function VerificationPage() {
                 )}
               </div>
 
-              {/* Submit Action Block */}
               <button 
                 type="submit" 
                 disabled={submitting}
