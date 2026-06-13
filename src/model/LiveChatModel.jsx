@@ -249,7 +249,7 @@ function LiveChatModal({ productId, sellerId, buyerId, authenticatedUserId, onCl
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  const handleSendMessage = async (e) => {
+ const handleSendMessage = async (e) => {
     e.preventDefault();
     const hasText = typedMessage.trim().length > 0;
     if (!activeRoom || !currentUserId || (!hasText && !attachedFile)) return;
@@ -260,14 +260,35 @@ function LiveChatModal({ productId, sellerId, buyerId, authenticatedUserId, onCl
       let uploadedImageUrl = null;
       const messagePayloadText = typedMessage.trim();
 
+      // If it's a brand new chat sequence, create the room entry safely
       if (targetRoomId === "NEW_ROOM_STUB") {
+        
+        // 🛠️ SAFEST EXTRA CHECK: Double check if this product_id exists in the products table
+        const { data: productExists } = await supabase
+          .from("products")
+          .select("id")
+          .eq("id", productId)
+          .maybeSingle();
+
+        // Build the payload payload dynamically
+        const roomInsertPayload = {
+          seller_id: sellerId,
+          buyer_id: currentUserId
+        };
+
+        // Only attach product_id if it is a genuine item inside the products table
+        if (productExists) {
+          roomInsertPayload.product_id = productId;
+        } else {
+          console.warn(`Product ID ${productId} not found in 'products' table. Treating as custom tuition assignment.`);
+          // If your database requires product_id, you can assign a fallback template row ID here,
+          // or leave it null if your DB columns allow nullable references.
+          roomInsertPayload.product_id = null; 
+        }
+
         const { data: newRoom, error: roomError } = await supabase
           .from("chat_rooms")
-          .insert([{
-            product_id: productId,
-            seller_id: sellerId,
-            buyer_id: currentUserId
-          }])
+          .insert([roomInsertPayload])
           .select()
           .single();
 
@@ -275,6 +296,7 @@ function LiveChatModal({ productId, sellerId, buyerId, authenticatedUserId, onCl
         targetRoomId = newRoom.id;
       }
 
+      // Handling file uploads
       if (attachedFile) {
         const fileExt = attachedFile.name.split(".").pop();
         const fileName = `chat-${targetRoomId}-${Date.now()}.${fileExt}`;
@@ -289,6 +311,7 @@ function LiveChatModal({ productId, sellerId, buyerId, authenticatedUserId, onCl
         uploadedImageUrl = data.publicUrl;
       }
 
+      // Insert message payload
       const { error: msgError } = await supabase
         .from("chat_messages")
         .insert([{
@@ -305,12 +328,16 @@ function LiveChatModal({ productId, sellerId, buyerId, authenticatedUserId, onCl
 
       if (activeRoom.id === "NEW_ROOM_STUB") {
         await fetchChatRooms(currentUserId);
+        
+        // Match the newly structured active room context state
         const { data: refreshedRooms } = await supabase
           .from("chat_rooms")
           .select("id")
-          .eq("product_id", productId)
+          .eq("seller_id", sellerId)
           .eq("buyer_id", currentUserId)
-          .single();
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
         
         if (refreshedRooms) {
           setActiveRoom(prev => ({ ...prev, id: refreshedRooms.id }));
@@ -320,8 +347,8 @@ function LiveChatModal({ productId, sellerId, buyerId, authenticatedUserId, onCl
       }
 
     } catch (err) {
-      console.error(err);
-      toast.error("Delivery failure mapping transmission packages.");
+      console.error("Failed handling database payload mappings:", err);
+      toast.error(err.message || "Delivery failure mapping transmission packages.");
     } finally {
       setSending(false);
     }

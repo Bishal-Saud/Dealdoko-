@@ -15,12 +15,13 @@ const translations = {
     timerLabel: "यो Ad बन्द हुन बाँकी समय:",
     heading: "TolPath ले ल्याएको छ एकदमै exciting opportunity!",
     subheading: "अब तपाईंले आफ्नो घर नजिकैको home tuition सजिलै पाउन सक्नुहुन्छ। College students हरूको लागि यो एकदमै राम्रो part-time side income को मौका हो— flexible time मा आफ्नो skill प्रयोग गरेर कमाउनुहोस्।",
-    footerText: "Aba padhna sanga-sanga sikhaune ra earn garne duita kaam ekai sath  गर्नुहोस्। TolPath मा register गरेर locally कमाउनुहोस्। 🚀",
+    footerText: "Aba padhna sanga-sanga sikhaune ra earn garne duita kaam ekai sath गर्नुलहोस्। TolPath मा register गरेर locally कमाउनुहोस्। 🚀",
     cta: "अहिले नै Register गर्नुहोस्"
   }
 };
 
-function BecomeATeacherAds() {
+// 💡 ADDED: Passed is_verified_seller as a component prop
+function BecomeATeacherAds({ is_verified_seller = false }) {
   const [isVisible, setIsVisible] = useState(false);
   const [hasShown, setHasShown] = useState(false);
   const [timeLeft, setTimeLeft] = useState(300); 
@@ -28,7 +29,9 @@ function BecomeATeacherAds() {
   const [language, setLanguage] = useState('ne'); 
 
   useEffect(() => {
-  
+    // 💡 BLOCKER: Do not attach event listeners if user is already verified
+    if (is_verified_seller) return;
+
     const handleMouseLeave = (e) => {
       if (e.clientY < 20 && !hasShown) {
         setIsVisible(true);
@@ -38,10 +41,12 @@ function BecomeATeacherAds() {
 
     document.addEventListener('mouseleave', handleMouseLeave);
     return () => document.removeEventListener('mouseleave', handleMouseLeave);
-  }, [hasShown]);
+  }, [hasShown, is_verified_seller]); // 💡 Added dependency track
 
   useEffect(() => {
- 
+    // 💡 BLOCKER: Do not run count down if user is verified
+    if (is_verified_seller) return;
+
     let interval;
     if (isVisible && timeLeft > 0) {
       interval = setInterval(() => {
@@ -52,7 +57,7 @@ function BecomeATeacherAds() {
     }
 
     return () => clearInterval(interval);
-  }, [isVisible, timeLeft]);
+  }, [isVisible, timeLeft, is_verified_seller]);
 
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
@@ -60,7 +65,8 @@ function BecomeATeacherAds() {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  if (!isVisible) return null;
+  // 💡 HARD CUTOFF: Early return null if verified or not marked visible
+  if (is_verified_seller || !isVisible) return null;
 
   const t = translations[language];
 
@@ -76,8 +82,6 @@ function BecomeATeacherAds() {
         whileDrag={{ cursor: 'grabbing', scale: 0.99 }}
         className="pointer-events-auto w-full max-w-sm rounded-xl bg-white p-5 text-slate-900 shadow-xl border border-slate-200/80 cursor-grab select-none"
       >
-        
-        
         <div className="flex items-center justify-between border-b border-slate-100 pb-2.5 mb-3.5">
           <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-medium">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -106,16 +110,12 @@ function BecomeATeacherAds() {
           </div>
         </div>
 
-        
         <div className="space-y-3.5 text-left">
-          
-        
           <div className="inline-flex items-center gap-1.5 text-[11px] font-medium text-amber-800 bg-amber-50 px-2 py-0.5 rounded">
             <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
             {t.timerLabel} <span className="font-mono font-bold tracking-tight ml-0.5">{formatTime(timeLeft)}</span>
           </div>
 
-         
           <div className="space-y-1.5">
             <h3 className="text-base font-bold text-slate-950 tracking-tight leading-snug">
               {t.heading}
@@ -131,7 +131,6 @@ function BecomeATeacherAds() {
             </p>
           </div>
 
-        
           <button 
             onClick={() => {
               window.location.href = '/role'; 
@@ -141,7 +140,6 @@ function BecomeATeacherAds() {
           >
             {t.cta}
           </button>
-
         </div>
       </motion.div>
     </div>
