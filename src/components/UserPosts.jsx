@@ -37,31 +37,29 @@ function UserPosts({ user, posts, setPosts }) {
           }
         }
 
-        // 2. Initialize Base Query
+       
         let query = supabase
           .from('tuition_requirements')
           .select('*');
 
-        // 3. SIMILARITY FILTER LOGIC:
-        // If a location is present, match the root base name (e.g., "Bhimdatta") 
-        // to catch trailing ward changes like "Bhimdatta - 13" or "Bhimdatta - 14"
+    
+       
         if (targetLocationName) {
-          // Clean the string: take characters before any space, dash, or number
-          // This turns "Bhimdatta - 13" into "Bhimdatta"
+         
           const baseLocation = targetLocationName
             .split(/[\s\-\d]/)[0]
             .trim();
 
           if (baseLocation && baseLocation.length >= 3) {
-            // Case-insensitive wildcard match: finds anything starting or containing the base name
+            
             query = query.ilike('location_name', `%${baseLocation}%`);
           } else {
-            // Fallback to exact match if the string string parsing yielded a short keyword
+            
             query = query.eq('location_name', targetLocationName);
           }
         }
 
-        // 4. Fire clean database query execution
+       
         const { data, error } = await query.order('created_at', { ascending: false });
 
         if (error) throw error;
@@ -153,7 +151,7 @@ function UserPosts({ user, posts, setPosts }) {
           </p>
         </div>
         
-        {/* Dynamic Area Badge Indicator */}
+      
         {teacherLocation && (
           <div className="self-start md:self-auto flex items-center gap-1.5 bg-blue-50 text-blue-700 border border-blue-200 px-3 py-1.5 rounded-xl text-xs font-bold">
             <Map size={14} className="animate-pulse" />
@@ -162,7 +160,7 @@ function UserPosts({ user, posts, setPosts }) {
         )}
       </div>
 
-      {/* Grid List View Container */}
+     
       {posts.length === 0 ? (
         <div className="bg-slate-50 border border-dashed border-slate-200 rounded-xl p-8 text-center text-sm text-slate-500 font-medium">
           {teacherLocation 
@@ -181,10 +179,10 @@ function UserPosts({ user, posts, setPosts }) {
                   key={post.id} 
                   className="bg-white border border-slate-200 shadow-xs rounded-2xl p-5 hover:border-blue-400 hover:shadow-lg transition-all duration-200 flex flex-col justify-between relative group"
                 >
-                  {/* Card Body */}
+               
                   <div className="space-y-4">
                     
-                    {/* Header Strip */}
+                  
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div className="flex items-center gap-1.5">
                         <span className="bg-blue-50 text-blue-700 text-[10px] font-black px-2.5 py-1 rounded-lg border border-blue-100 uppercase tracking-wider">
@@ -196,7 +194,6 @@ function UserPosts({ user, posts, setPosts }) {
                       </div>
                     </div>
 
-                    {/* Subject Display Block */}
                     <div className="p-3 bg-slate-50/50 rounded-xl border border-slate-100/80 space-y-1">
                       <div className="text-[10px] uppercase font-black tracking-widest text-slate-400 block">
                         Target Subject
@@ -238,7 +235,7 @@ function UserPosts({ user, posts, setPosts }) {
                       </div>
                     </div>
 
-                    {/* Metadata Layers */}
+                 
                     <div className="space-y-2.5 pt-1 text-xs font-semibold text-slate-600">
                       {post.required_qualification && (
                         <div className="flex items-center gap-2 bg-slate-50/40 px-3 py-2 rounded-xl border border-slate-100/60">
@@ -276,7 +273,7 @@ function UserPosts({ user, posts, setPosts }) {
 
                   </div>
 
-                  {/* Action Button */}
+             
                   <div className="mt-5 pt-3 border-t border-slate-100">
                     <button
                       disabled={checkingVerification}
