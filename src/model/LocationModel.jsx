@@ -1,53 +1,57 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../api/supabase.js';
-import { MapPin, Building2 } from 'lucide-react'; // Clean UI Icons
+import { MapPin, Building2 } from 'lucide-react'; 
 
-const LocationModal = ({ user }) => {
+const LocationModal = ({ user, onLocationUpdated }) => { // 💡 Added a callback prop to notify parent
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   
-  // New States for step tracking and custom landmarks
-  const [step, setStep] = useState(1); // Step 1: Detect, Step 2: Landmark
-  const [detectedData, setDetectedData] = useState({ fullAddress: '', city: '' });
+  const [step, setStep] = useState(1); 
+  const [detectedData, setDetectedData] = useState({ fullAddress: '', city: '', latitude: null, longitude: null });
   const [landmark, setLandmark] = useState('');
 
-  useEffect(() => {
-    if (user && (!user.location_name || user.location_name === "")) {
-      const dismissedAt = localStorage.getItem("dismissed_location_at");
+useEffect(() => {
+  const checkFreshDatabaseLocation = async () => {
+    if (!user?.id) return;
+
+    try {
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('location_name')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (error) throw error;
       
-      if (dismissedAt) {
-        const timePassed = Date.now() - parseInt(dismissedAt, 10);
-        const fiveMinutes = 2 * 60 * 1000; // 2 minutes in milliseconds
+      // 🚨 FIX: If profile doesn't even exist yet, don't try to validate its strings
+      if (!profile) return; 
 
-        if (timePassed > fiveMinutes) {
-          // 2 minutes have passed, clear the timestamp and open the modal
-          localStorage.removeItem("dismissed_location_at");
-          setIsOpen(true);
-        } else {
-          // Not enough time has passed yet. Set a timeout to trigger it when the 2 mins are up
-          const remainingTime = fiveMinutes - timePassed;
-          const timer = setTimeout(() => {
-            localStorage.removeItem("dismissed_location_at");
-            setIsOpen(true);
-          }, remainingTime);
+      const locName = profile.location_name;
 
-          return () => clearTimeout(timer);
-        }
-      } else {
-        // No dismissal timestamp exists, show modal immediately
-        setIsOpen(true);
-      }
+      const isLocationInvalidOrNull = 
+        locName === null || 
+        locName === undefined ||
+        String(locName).trim() === "" || 
+        String(locName).trim() === "Invalid Location" ||
+        String(locName).toLowerCase().includes("invalid") || 
+        String(locName).includes('[object'); 
+
+      setIsOpen(isLocationInvalidOrNull);
+    } catch (err) {
+      console.error("Error checking verification profile requirements:", err);
     }
-  }, [user]);
+  };
+
+  checkFreshDatabaseLocation();
+}, [user?.id]); 
 
   const handleClose = () => {
-    // Save the current timestamp when "Maybe Later" is clicked
-    localStorage.setItem("dismissed_location_at", Date.now().toString());
     setIsOpen(false);
   };
 
-  const handleGetLocation = () => {
+  // 🔥 MERGED AND FIXED: Combined both geolocation handlers into one robust workflow
+  const handleGetLocationClick = () => {
     if (!navigator.geolocation) {
       setErrorMsg("Geolocation is not supported by your browser.");
       return;
@@ -68,10 +72,9 @@ const LocationModal = ({ user }) => {
           if (!response.ok) throw new Error("Failed to fetch address.");
           const data = await response.json();
 
-          const fullAddress = data.display_name; 
-          const city = data.address?.city || data.address?.town || data.address?.village || data.address?.municipality || "Unknown";
+          const fullAddress = data.display_name || "Unknown Address Layout"; 
+          const city = data.address?.city || data.address?.town || data.address?.village || data.address?.municipality || "Unknown City";
 
-          // Save detected data to state and advance to Step 2
           setDetectedData({ fullAddress, city, latitude, longitude });
           setStep(2); 
         } catch (err) {
@@ -82,9 +85,11 @@ const LocationModal = ({ user }) => {
         }
       },
       (geoError) => {
+        console.error("Geolocation error:", geoError);
         setErrorMsg("Location access denied. Please enable browser permissions.");
-        loading ? setLoading(false) : null;
-      }
+        setLoading(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
     );
   };
 
@@ -93,28 +98,38 @@ const LocationModal = ({ user }) => {
     setLoading(true);
     setErrorMsg('');
 
+    const finalAddress = String(detectedData.fullAddress);
+    const finalDescription = String(landmark).trim();
+
     try {
-      // Update Supabase with both GPS info AND your new custom landmark
       const { error } = await supabase
         .from('profiles')
         .update({
-          location_name: detectedData.fullAddress, 
-          location: detectedData.city,
-          latitude: detectedData.latitude,   
-          longitude: detectedData.longitude,
-          location_description: landmark 
+          location_name: finalAddress, 
+          latitude: Number(detectedData.latitude),   
+          longitude: Number(detectedData.longitude),
+          location_description: finalDescription,
+          updated_at: new Date().toISOString()
         })
         .eq('id', user.id);
 
       if (error) throw error;
       
-      // Clear the dismissed timestamp since they successfully saved their location
-      localStorage.removeItem("dismissed_location_at");
+      // 💡 Tell the parent component to update its state instead of mutating props directly
+      if (onLocationUpdated) {
+        onLocationUpdated({
+          location_name: finalAddress,
+          location_description: finalDescription,
+          latitude: Number(detectedData.latitude),
+          longitude: Number(detectedData.longitude)
+        });
+      }
+
       setIsOpen(false);
-      window.location.reload(); 
     } catch (err) {
-      console.error("Save failed:", err);
-      setErrorMsg("Could not save to database. Try again.");
+      console.error("Save failed directly:", err);
+      setErrorMsg(err.message || "Could not save to database. Try again.");
+    } finally {
       setLoading(false);
     }
   };
@@ -125,7 +140,6 @@ const LocationModal = ({ user }) => {
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
       <div className="bg-white p-6 rounded-xl max-w-sm w-full shadow-2xl border border-slate-100 transition-all">
         
-        {/* STEP 1: DETECT AUTOMATIC LOCATION */}
         {step === 1 && (
           <>
             <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mb-4">
@@ -138,7 +152,8 @@ const LocationModal = ({ user }) => {
 
             <div className="flex flex-col gap-2 mt-4">
               <button 
-                onClick={handleGetLocation}
+                type="button"
+                onClick={handleGetLocationClick}
                 disabled={loading}
                 className={`w-full text-white font-medium py-2.5 rounded-lg transition-colors ${
                   loading ? 'bg-slate-400' : 'bg-blue-600 hover:bg-blue-700'
@@ -147,6 +162,7 @@ const LocationModal = ({ user }) => {
                 {loading ? "Detecting Location..." : "Allow Location Access"}
               </button>
               <button 
+                type="button"
                 onClick={handleClose}
                 className="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-medium py-2.5 rounded-lg text-sm"
               >
@@ -156,7 +172,6 @@ const LocationModal = ({ user }) => {
           </>
         )}
 
-        {/* STEP 2: ADD FAMOUS LANDMARK / DESCRIPTION */}
         {step === 2 && (
           <form onSubmit={handleSaveFinalLocation}>
             <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mb-4">
@@ -177,7 +192,7 @@ const LocationModal = ({ user }) => {
                 placeholder="e.g., Near Mahakali Hospital, Opposite Campus Gate"
                 className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
-              <p className="text-[11px] text-slate-400 mt-1">This helps tutors easily pinpoint your neighborhood sector.</p>
+              <p className="text-[11px] text-slate-400 mt-1">This saves to your description to help pin down your block.</p>
             </div>
 
             {errorMsg && <p className="mb-3 text-xs text-red-500 bg-red-50 p-2 rounded">{errorMsg}</p>}

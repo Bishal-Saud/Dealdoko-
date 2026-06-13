@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../api/supabase.js'; 
-import { ShieldCheck, MapPin, Phone, CheckCircle2, Clock, UserCheck, Navigation, AlertTriangle, Building2 } from 'lucide-react';
+import { ShieldCheck, MapPin, Phone, CheckCircle2, Clock, UserCheck, Navigation, AlertTriangle } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import HomeLayout from '../Layouts/HomeLayout.jsx';
 
@@ -12,9 +12,8 @@ function VerificationPage() {
   // Form Fields
   const [phoneNumber, setPhoneNumber] = useState('');
   const [countryCode, setCountryCode] = useState('+977');
-  const [locationDescription, setLocationDescription] = useState(''); 
   
-  // Geolocation Tracking & Accountability States
+  // Geolocation States
   const [district, setDistrict] = useState('');
   const [cityLocation, setCityLocation] = useState('');
   const [latitude, setLatitude] = useState(null);
@@ -38,7 +37,8 @@ function VerificationPage() {
   const fetchCurrentVerificationStatus = async (userId) => {
     const { data, error } = await supabase
       .from('profiles')
-      .select('verification_status, phone_number, location_name, location, location_description, latitude, longitude')
+      // Cleaned select: Only requesting the primary location column
+      .select('verification_status, phone_number, location, latitude, longitude') 
       .eq('id', userId)
       .single();
 
@@ -50,10 +50,9 @@ function VerificationPage() {
       }
       if (data.latitude) setLatitude(data.latitude);
       if (data.longitude) setLongitude(data.longitude);
-      if (data.location_description) setLocationDescription(data.location_description);
       
-      // Strict fallback parsing block
-      const rawLocation = data.location_name || data.location;
+      // Strict parsing using only the standard 'location' string
+      const rawLocation = data.location; 
       if (rawLocation && typeof rawLocation === 'string' && !rawLocation.includes('[object')) {
         const parts = rawLocation.split(',');
         if (parts.length >= 2) {
@@ -114,36 +113,29 @@ function VerificationPage() {
 
   const handleSubmitVerification = async (e) => {
     e.preventDefault();
-  
+
     if (!isPhoneNumberValid(phoneNumber)) {
       return toast.error("Please enter a valid 10-digit WhatsApp number.");
     }
     if (!user) return toast.error('Please log in first.');
-    if (!latitude || !longitude) return toast.error('Please unlock your live physical coordinates map pin before submitting.');
 
     setSubmitting(true);
 
-    // Completely isolated immutable string compilation parameters
     const finalCity = cityLocation ? String(cityLocation).trim() : "Unknown City";
     const finalDistrict = district ? String(district).trim() : "Nepal";
     const absoluteLocationString = `${finalCity}, ${finalDistrict}`;
     const fullPhoneNumber = `${countryCode}${phoneNumber}`;
-    const targetDescription = locationDescription ? String(locationDescription).trim() : "";
 
     try {
-      // Direct update verification transaction layout 
+      // Save ONLY basic verification data to standard columns
       const { error: profileError } = await supabase
         .from('profiles')
-        .upsert({
-          id: user.id,
+        .update({
           phone_number: fullPhoneNumber,
           location: absoluteLocationString,
-          location_name: absoluteLocationString, // Pure structural string delivery 
-          location_description: targetDescription, 
-          latitude: Number(latitude),   
-          longitude: Number(longitude), 
           verification_status: 'pending' 
-        }, { onConflict: 'id' }); // Strict key targeting override configuration
+        })
+        .eq('id', user.id);
 
       if (profileError) throw profileError;
 
@@ -317,24 +309,6 @@ function VerificationPage() {
                         </span>
                       </div>
                     )}
-
-                    <div className="space-y-2 pt-2">
-                      <label className="text-xs font-black text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-                        <Building2 size={14} className="text-slate-500" /> Landmark / Location Details
-                      </label>
-                      <input 
-                        type="text"
-                        required
-                        placeholder="e.g., Near Dharahara, opposite to school, near Kamal Pokhari"
-                        value={locationDescription}
-                        onChange={(e) => setLocationDescription(e.target.value)}
-                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium outline-none focus:border-blue-500 transition shadow-xs"
-                      />
-                      <p className="text-[11px] text-slate-400">
-                        Provide a clear local landmark so community members can easily spot or reach your physical location boundaries.
-                      </p>
-                    </div>
-
                   </div>
                 ) : (
                   <div className="p-8 border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50/50 text-center space-y-2">

@@ -69,15 +69,7 @@ function Footer() {
               Trust & Safety
             </h4>
             <ul className="space-y-2.5 text-sm font-semibold">
-              <li>
-                <Link
-                  to="/verify"
-                  className="text-slate-400 hover:text-amber-400 transition flex items-center gap-2"
-                >
-                  <ShieldCheck size={16} className="text-amber-500" /> KYC
-                  Verified Tutors
-                </Link>
-              </li>
+          
               <li>
                 <Link
                   to="/terms-and-policy"

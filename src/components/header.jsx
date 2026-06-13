@@ -99,7 +99,7 @@ function Header() {
           full_name: user.user_metadata?.full_name,
           avatar_url: user.user_metadata?.avatar_url,
           email: user.email,
-          location_name: user.user_metadata?.location || "Invalid Location",
+          
         });
 
         fetchUserProfileData(user.id);

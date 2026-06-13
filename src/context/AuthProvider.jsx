@@ -20,7 +20,7 @@ export const AuthProvider = ({ children }) => {
         .from('profiles')
         .select('*') 
         .eq('id', authUser.id)
-        .maybeSingle();
+        .single();
 
       if (error) throw error;
 
