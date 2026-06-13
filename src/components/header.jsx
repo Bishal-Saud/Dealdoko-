@@ -73,7 +73,7 @@ function Header() {
       if (data && data.length > 0) {
         const profile = data[0];
         setIsVerifiedSeller(!!profile.is_verified_seller);
-        setUserLocation(profile.location );
+        setUserLocation(profile.location_name );
         setDbFullName(profile.full_name || "");
         setDbAvatarUrl(profile.avatar_url || "");
       }
@@ -309,7 +309,7 @@ const handleLocationBadgeClick = () => {
                 >
                   {userLocation 
   ? (userLocation.length > 15 ? `${userLocation.substring(0, 15)}...` : userLocation)
-  : "Detecting Location..."
+  : "Finding Location..."
 }
                 </span>
 
