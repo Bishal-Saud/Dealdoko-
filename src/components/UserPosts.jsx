@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../api/supabase.js';
 import toast from 'react-hot-toast'; 
 import { 
   BookOpen, Wallet, Calendar, MapPin, 
   GraduationCap, FileText, ArrowRight, X, ShieldAlert,
-  Hash, Map, Lock
+  Hash, Map, Lock, MoreVertical, CheckCircle2, Trash2, Edit3,
+  Clock, RefreshCw, AlertTriangle
 } from 'lucide-react';
 import LiveChatModal from '../model/LiveChatModel.jsx'; 
 
@@ -16,10 +17,22 @@ function UserPosts({ user, posts, setPosts }) {
   const [checkingVerification, setCheckingVerification] = useState(false);
   const [activeChatConfig, setActiveChatConfig] = useState(null);
   const [teacherLocation, setTeacherLocation] = useState(null);
+  
+  const [openMenuPostId, setOpenMenuPostId] = useState(null);
+  const menuRef = useRef(null);
 
   const isAuthenticated = !!user;
 
-  // Integrated Google OAuth Method
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setOpenMenuPostId(null);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const handleGoogleLogin = async () => {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
@@ -28,7 +41,6 @@ function UserPosts({ user, posts, setPosts }) {
           redirectTo: window.location.origin, 
         },
       });
-      
       if (error) throw error;
     } catch (error) {
       console.error('Error logging in with Google:', error.message);
@@ -40,7 +52,6 @@ function UserPosts({ user, posts, setPosts }) {
     const fetchAreaSpecificPosts = async () => {
       try {
         setLoading(true);
-        
         let targetLocationName = null;
 
         if (isAuthenticated && user?.id) {
@@ -56,15 +67,10 @@ function UserPosts({ user, posts, setPosts }) {
           }
         }
 
-        let query = supabase
-          .from('tuition_requirements')
-          .select('*');
+        let query = supabase.from('tuition_requirements').select('*');
 
         if (isAuthenticated && targetLocationName) {
-          const baseLocation = targetLocationName
-            .split(/[\s\-\d]/)[0]
-            .trim();
-
+          const baseLocation = targetLocationName.split(/[\s\-\d]/)[0].trim();
           if (baseLocation && baseLocation.length >= 3) {
             query = query.ilike('location_name', `%${baseLocation}%`);
           } else {
@@ -72,10 +78,29 @@ function UserPosts({ user, posts, setPosts }) {
           }
         }
 
-        const { data, error } = await query.order('created_at', { ascending: false });
-
+        // Order chronologically by default
+        const { data, error } = await query.order('updated_at', { ascending: false });
         if (error) throw error;
-        setPosts(data || []);
+
+        // --- LIFECYCLE MANAGEMENT FILTERING ---
+        const filteredData = (data || []).filter(post => {
+          const isOwnPost = isAuthenticated && user?.id === post.user_id;
+          
+          // Calculate if listing has exceeded its 10-day window
+          const referenceDate = post.updated_at ? new Date(post.updated_at) : new Date(post.created_at);
+          const daysDifference = (new Date() - referenceDate) / (1000 * 60 * 60 * 24);
+          const isExpired = daysDifference >= 10;
+
+          // If it's your post, always show it (even if expired, or filled)
+          if (isOwnPost) return true;
+
+          // Hide if expired, or if teacher is already found
+          if (isExpired || post.status === 'teacher_found') return false;
+
+          return true;
+        });
+
+        setPosts(filteredData);
       } catch (err) {
         console.error("Error fetching regional requirements board:", err);
       } finally {
@@ -94,22 +119,15 @@ function UserPosts({ user, posts, setPosts }) {
 
     try {
       setCheckingVerification(true);
-      
-      
       const { data: profile, error } = await supabase
         .from('profiles')
         .select('is_verified_seller')
         .eq('id', user.id)
         .maybeSingle();
 
-      if (error) {
-        console.error("Supabase Database Query Error:", error.message);
-      }
+      if (error) console.error("Supabase Query Error:", error.message);
 
-    
-      const isVerifiedTeacher = 
-        profile?.is_verified_seller === true || 
-        profile?.is_verified_seller === 'true';
+      const isVerifiedTeacher = profile?.is_verified_seller === true || profile?.is_verified_seller === 'true';
 
       if (isVerifiedTeacher) {
         setActiveChatConfig({
@@ -120,7 +138,6 @@ function UserPosts({ user, posts, setPosts }) {
       } else {
         setShowRoleModal(true);
       }
-
     } catch (err) {
       console.error("Critical Exception inside handleApplyClick:", err);
       toast.error("An error occurred while verifying your status.");
@@ -130,14 +147,72 @@ function UserPosts({ user, posts, setPosts }) {
     }
   };
 
+  // --- Post Status Management Handlers ---
+  const updatePostStatus = async (postId, newStatus) => {
+    try {
+      const { error } = await supabase
+        .from('tuition_requirements')
+        .update({ status: newStatus })
+        .eq('id', postId);
+
+      if (error) throw error;
+      
+      toast.success(`Listing status shifted to '${newStatus.replace('_', ' ')}'`);
+      setPosts(prev => prev.map(p => p.id === postId ? { ...p, status: newStatus } : p));
+    } catch (err) {
+      toast.error("Failed to update status configuration.");
+    } finally {
+      setOpenMenuPostId(null);
+    }
+  };
+
+  // Renew / Repost function to push visibility out another 10 days
+  const handleRenewPost = async (postId) => {
+    try {
+      const rightNowiso = new Date().toISOString();
+      const { error } = await supabase
+        .from('tuition_requirements')
+        .update({ 
+          updated_at: rightNowiso,
+          status: 'active' // Resets back to active when bumping visibility
+        })
+        .eq('id', postId);
+
+      if (error) throw error;
+
+      toast.success("Post successfully renewed for 10 more days!");
+      setPosts(prev => prev.map(p => p.id === postId ? { ...p, updated_at: rightNowiso, status: 'active' } : p));
+    } catch (err) {
+      toast.error("Failed to renew listing visibility window.");
+    } finally {
+      setOpenMenuPostId(null);
+    }
+  };
+
+  // const handleEditPost = (postId) => {
+  //   setOpenMenuPostId(null);
+  //   navigate(`/edit-tuition/${postId}`);
+  // };
+
+  const handleDeletePost = async (postId) => {
+    if (!window.confirm("Are you sure you want to delete this tuition requirement?")) return;
+    try {
+      const { error } = await supabase.from('tuition_requirements').delete().eq('id', postId);
+      if (error) throw error;
+      toast.success("Post deleted successfully.");
+      setPosts(prev => prev.filter(p => p.id !== postId));
+    } catch (err) {
+      toast.error("Failed to delete post.");
+    } finally {
+      setOpenMenuPostId(null);
+    }
+  };
+
   const parseSubjectString = (rawSubject) => {
     if (!rawSubject) return { title: "General Tuition", subtitle: null };
     const match = rawSubject.match(/^(.*?)\s*((?:class|code)?\s*\d+)$/i);
     if (match) {
-      return {
-        title: match[1].trim(),
-        subtitle: match[2].trim()
-      };
+      return { title: match[1].trim(), subtitle: match[2].trim() };
     }
     return { title: rawSubject, subtitle: null };
   };
@@ -158,26 +233,15 @@ function UserPosts({ user, posts, setPosts }) {
       <div className="border-b border-slate-100 pb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h2 className="text-xl font-bold text-slate-900 tracking-tight">
-            {isAuthenticated ? (
-              <>Active Tuition Requirements Nearby</>
-            ) : (
-              <>Available Home Tuition Earning Opportunities</>
-            )}
+            {isAuthenticated ? <>Active Tuition Requirements Nearby</> :  <>Available Home Tuition Earning Opportunities</>}
           </h2>
           <p className="text-xs md:text-sm text-slate-500 mt-1">
-            {isAuthenticated ? (
-              "Verified matching requests from local families in your area."
-            ) : (
-              "Browse home tutoring vacancies posted by parents. Sign in instantly to claim assignments and unlock complete locations."
-            )}
+            {isAuthenticated ? "Verified matching requests from local families in your area." : "Browse vacancies posted by parents. Sign in instantly to unlock."}
           </p>
         </div>
         
         {!isAuthenticated && (
-          <button
-            onClick={handleGoogleLogin}
-            className="self-start md:self-auto flex items-center gap-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer shrink-0"
-          >
+          <button onClick={handleGoogleLogin} className="self-start md:self-auto flex items-center gap-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer shrink-0">
             <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
               <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
@@ -198,68 +262,116 @@ function UserPosts({ user, posts, setPosts }) {
 
       {posts.length === 0 ? (
         <div className="bg-slate-50 border border-dashed border-slate-200 rounded-xl p-8 text-center text-xs text-slate-400 font-medium">
-          {isAuthenticated && teacherLocation 
-            ? `No matching tuition requirements found near "${teacherLocation}" right now.`
-            : "No active opportunities found at this time."
-          }
+          {isAuthenticated && teacherLocation ? `No matching requirements found near "${teacherLocation}".` : "No active opportunities found."}
         </div>
       ) : (
         <div className="max-h-[640px] overflow-y-auto pr-2 space-y-4 custom-scrollbar scroll-smooth">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {posts.map((post) => {
               const subjectInfo = parseSubjectString(post.subject);
+              const isOwnPost = isAuthenticated && user?.id === post.user_id;
+              
+              // Recalculate duration metrics inline for ui states
+              const referenceDate = post.updated_at ? new Date(post.updated_at) : new Date(post.created_at);
+              const daysOld = Math.floor((new Date() - referenceDate) / (1000 * 60 * 60 * 24));
+              const isExpired = daysOld >= 10;
 
               return (
-                <div 
-                  key={post.id} 
-                  className="bg-white border border-slate-200 shadow-xs rounded-2xl p-5 hover:border-slate-300 transition-all duration-150 flex flex-col justify-between relative group"
-                >
+                <div key={post.id} className={`bg-white border rounded-2xl p-5 transition-all duration-150 flex flex-col justify-between relative group ${isOwnPost && isExpired ? 'border-amber-200 bg-amber-50/20' : 'border-slate-200 shadow-xs hover:border-slate-300'}`}>
+                  
                   <div className="space-y-4">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <div className="flex items-center gap-1.5">
+                    <div className="flex flex-wrap items-center justify-between gap-2 relative">
+                      <div className="flex flex-wrap items-center gap-1.5">
                         <span className="bg-slate-100 text-slate-700 text-[10px] font-bold px-2.5 py-1 rounded-lg border border-slate-200/60 uppercase tracking-wider">
                           Class: {post.class_level || "General"}
                         </span>
+                        
+                        {/* Status Label Badges */}
+                        {post.status === 'trial_period' && (
+                          <span className="bg-blue-50 text-blue-700 text-[10px] font-bold px-2.5 py-1 rounded-lg border border-blue-200 uppercase tracking-wider flex items-center gap-1">
+                            <Clock size={10} /> Trial Run
+                          </span>
+                        )}
+                        {post.status === 'teacher_found' && (
+                          <span className="bg-emerald-50 text-emerald-700 text-[10px] font-bold px-2.5 py-1 rounded-lg border border-emerald-200 uppercase tracking-wider">
+                            Teacher Found
+                          </span>
+                        )}
+                        {isOwnPost && isExpired && (
+                          <span className="bg-amber-100 text-amber-800 text-[10px] font-bold px-2.5 py-1 rounded-lg border border-amber-300 uppercase tracking-wider flex items-center gap-1">
+                            <AlertTriangle size={10} /> Expired (Hidden)
+                          </span>
+                        )}
                       </div>
-                      <div className="text-[10px] text-slate-400 font-mono bg-slate-50 px-2 py-0.5 rounded-md border border-slate-100">
-                        #{post.id?.slice(0, 8)}
+                      
+                      <div className="flex items-center gap-2">
+                        <div className="text-[10px] text-slate-400 font-mono bg-slate-50 px-2 py-0.5 rounded-md border border-slate-100">
+                          #{post.id?.slice(0, 8)}
+                        </div>
+
+                        {/* Three Dots Menu */}
+                        {isOwnPost && (
+                          <div className="relative" ref={openMenuPostId === post.id ? menuRef : null}>
+                            <button onClick={() => setOpenMenuPostId(openMenuPostId === post.id ? null : post.id)} className="p-1 text-slate-500 hover:text-slate-800 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer">
+                              <MoreVertical size={16} />
+                            </button>
+
+                            {openMenuPostId === post.id && (
+                              <div className="absolute right-0 mt-1 w-48 bg-white border border-slate-200 rounded-xl shadow-lg py-1 z-10 animate-in fade-in slide-in-from-top-1 duration-100">
+                                {post.status !== 'trial_period' && post.status !== 'teacher_found' && (
+                                  <button onClick={() => updatePostStatus(post.id, 'trial_period')} className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-blue-600 hover:bg-blue-50 text-left cursor-pointer">
+                                    <Clock size={14} /> Set to Trial Run
+                                  </button>
+                                )}
+                                {post.status !== 'teacher_found' && (
+                                  <button onClick={() => updatePostStatus(post.id, 'teacher_found')} className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-emerald-600 hover:bg-emerald-50 text-left cursor-pointer">
+                                    <CheckCircle2 size={14} /> Mark Teacher Found
+                                  </button>
+                                )}
+                                {isExpired && (
+                                  <button onClick={() => handleRenewPost(post.id)} className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-amber-600 hover:bg-amber-50 text-left cursor-pointer">
+                                    <RefreshCw size={14} /> Renew Listing (10 Days)
+                                  </button>
+                                )}
+                                {/* <button onClick={() => handleEditPost(post.id)} className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 text-left cursor-pointer">
+                                  <Edit3 size={14} /> Edit Request
+                                </button> */}
+                                <div className="border-t border-slate-100 my-1"></div>
+                                <button onClick={() => handleDeletePost(post.id)} className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-50 text-left cursor-pointer">
+                                  <Trash2 size={14} /> Delete Listing
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
 
+                    {/* Subject info cards */}
                     <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-1">
-                      <div className="text-[9px] uppercase font-bold tracking-wider text-slate-400 block">
-                        Target Subject
-                      </div>
+                      <div className="text-[9px] uppercase font-bold tracking-wider text-slate-400 block">Target Subject</div>
                       <div className="flex items-start gap-2">
                         <BookOpen className="w-4 h-4 text-slate-500 mt-0.5 shrink-0" />
                         <div>
-                          <h3 className="text-sm font-bold text-slate-900 capitalize leading-tight">
-                            {subjectInfo.title}
-                          </h3>
+                          <h3 className="text-sm font-bold text-slate-900 capitalize leading-tight">{subjectInfo.title}</h3>
                           {subjectInfo.subtitle && (
-                            <p className="text-xs text-slate-500 font-semibold flex items-center gap-1 mt-0.5 capitalize">
-                              <Hash size={12} /> {subjectInfo.subtitle}
-                            </p>
+                            <p className="text-xs text-slate-500 font-semibold flex items-center gap-1 mt-0.5 capitalize"><Hash size={12} /> {subjectInfo.subtitle}</p>
                           )}
                         </div>
                       </div>
                     </div>
 
+                    {/* Budget & Frequency blocks */}
                     <div className="grid grid-cols-2 gap-3">
                       <div className="flex items-center gap-2.5 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-                        <div className="p-1.5 bg-white rounded-lg text-slate-600 border border-slate-100">
-                          <Wallet className="w-3.5 h-3.5" />
-                        </div>
+                        <div className="p-1.5 bg-white rounded-lg text-slate-600 border border-slate-100"><Wallet className="w-3.5 h-3.5" /></div>
                         <div>
                           <p className="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Budget</p>
                           <p className="text-xs font-bold text-slate-800">Rs. {post.budget_per_month.toLocaleString()}/mo</p>
                         </div>
                       </div>
-
                       <div className="flex items-center gap-2.5 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-                        <div className="p-1.5 bg-white rounded-lg text-slate-600 border border-slate-100">
-                          <Calendar className="w-3.5 h-3.5" />
-                        </div>
+                        <div className="p-1.5 bg-white rounded-lg text-slate-600 border border-slate-100"><Calendar className="w-3.5 h-3.5" /></div>
                         <div>
                           <p className="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Frequency</p>
                           <p className="text-xs font-bold text-slate-800">{post.frequency_per_week} Classes/wk</p>
@@ -290,12 +402,8 @@ function UserPosts({ user, posts, setPosts }) {
                           </p>
                         ) : (
                           <div className="flex items-center justify-between w-full">
-                            <p className="text-slate-400 text-[11px] font-bold select-none blur-[4px]">
-                              Kathmandu, Nepal (Near Landmark Area)
-                            </p>
-                            <span className="text-[9px] font-black uppercase text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-md flex items-center gap-0.5 shrink-0 border border-emerald-100/60">
-                              <Lock size={10} /> Locked
-                            </span>
+                            <p className="text-slate-400 text-[11px] font-bold select-none blur-[4px]">Kathmandu, Nepal (Near Landmark Area)</p>
+                            <span className="text-[9px] font-black uppercase text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-md flex items-center gap-0.5 shrink-0 border border-emerald-100/60"><Lock size={10} /> Locked</span>
                           </div>
                         )}
                       </div>
@@ -305,31 +413,49 @@ function UserPosts({ user, posts, setPosts }) {
                           <FileText className="w-3.5 h-3.5 text-slate-400 mt-0.5 shrink-0" />
                           <div>
                             <span className="font-bold text-slate-400 text-[9px] uppercase tracking-wider block mb-0.5">Remarks</span>
-                            <p className="text-slate-600 font-medium text-[11px] leading-relaxed line-clamp-2 italic">
-                              "{post.description}"
-                            </p>
+                            <p className="text-slate-600 font-medium text-[11px] leading-relaxed line-clamp-2 italic">"{post.description}"</p>
                           </div>
                         </div>
                       )}
                     </div>
                   </div>
 
+                  {/* Primary Interaction Action Footer */}
                   <div className="mt-5 pt-3 border-t border-slate-100">
-                    <button
-                      disabled={checkingVerification}
-                      onClick={() => handleApplyClick(post)}
-                      className="w-full bg-slate-950 hover:bg-slate-800 text-white font-bold py-2.5 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 shadow-xs disabled:bg-slate-300 cursor-pointer"
-                    >
-                      {checkingVerification ? (
-                        <>Validating Credentials...</>
+                    {isOwnPost ? (
+                      isExpired ? (
+                        <button onClick={() => handleRenewPost(post.id)} className="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-2.5 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 shadow-xs cursor-pointer">
+                          <RefreshCw className="w-3.5 h-3.5 animate-spin-slow" /> Repost / Renew Visibility
+                        </button>
                       ) : (
-                        <>
-                          {isAuthenticated ? "Apply for Tuition" : "Sign In to Unlock & Apply"} 
-                          <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
-                        </>
-                      )}
-                    </button>
+                        <div className="flex flex-col gap-2">
+                          <div className="text-center py-2 bg-slate-100 text-slate-600 rounded-xl text-xs font-bold select-none border border-slate-200">
+                            Your Active Listing ({10 - daysOld} days left)
+                          </div>
+                        </div>
+                      )
+                    ) : (
+                      <button
+                        disabled={checkingVerification || post.status === 'teacher_found'}
+                        onClick={() => handleApplyClick(post)}
+                        className="w-full bg-slate-950 hover:bg-slate-800 text-white font-bold py-2.5 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 shadow-xs disabled:bg-slate-300 cursor-pointer"
+                      >
+                        {checkingVerification ? (
+                          <>Validating Credentials...</>
+                        ) : post.status === 'teacher_found' ? (
+                          <>Assignment Filled</>
+                        ) : post.status === 'trial_period' ? (
+                          <>In Trial Period</>
+                        ) : (
+                          <>
+                            {isAuthenticated ? "Apply for Tuition" : "Sign In to Unlock & Apply"} 
+                            <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
+                          </>
+                        )}
+                      </button>
+                    )}
                   </div>
+
                 </div>
               );
             })}
@@ -341,35 +467,13 @@ function UserPosts({ user, posts, setPosts }) {
       {showRoleModal && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
           <div className="bg-white rounded-2xl max-w-sm w-full shadow-2xl border border-slate-100 overflow-hidden relative p-6 text-center animate-in zoom-in-95 duration-200">
-            <button 
-              onClick={() => setShowRoleModal(false)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
-            >
-              <X className="w-5 h-5" />
-            </button>
-            <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3 border border-slate-100">
-              <ShieldAlert className="w-6 h-6 text-slate-700" />
-            </div>
+            <button onClick={() => setShowRoleModal(false)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"><X className="w-5 h-5" /></button>
+            <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3 border border-slate-100"><ShieldAlert className="w-6 h-6 text-slate-700" /></div>
             <h3 className="text-base font-bold text-slate-900 mb-1.5">Verification Required</h3>
-            <p className="text-xs text-slate-500 leading-relaxed mb-5">
-              To apply for open tuition vacancies and access instant direct messaging streams with families, your profile verification process must be completed first.
-            </p>
+            <p className="text-xs text-slate-500 leading-relaxed mb-5">To apply for open tuition vacancies, your profile verification process must be completed first.</p>
             <div className="space-y-2">
-              <button
-                onClick={() => {
-                  setShowRoleModal(false);
-                  navigate('/role');
-                }}
-                className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-2.5 rounded-xl text-xs transition-colors tracking-wide cursor-pointer"
-              >
-                Go to Verification Dashboard
-              </button>
-              <button
-                onClick={() => setShowRoleModal(false)}
-                className="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-medium py-2 rounded-xl text-xs transition-colors cursor-pointer"
-              >
-                Maybe Later
-              </button>
+              <button onClick={() => { setShowRoleModal(false); navigate('/role'); }} className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-2.5 rounded-xl text-xs transition-colors tracking-wide cursor-pointer">Go to Verification Dashboard</button>
+              <button onClick={() => setShowRoleModal(false)} className="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-medium py-2 rounded-xl text-xs transition-colors cursor-pointer">Maybe Later</button>
             </div>
           </div>
         </div>
@@ -377,15 +481,7 @@ function UserPosts({ user, posts, setPosts }) {
 
       {/* Live Chat Modal */}
       {activeChatConfig && (
-<LiveChatModal 
-    productId={activeChatConfig.productId} 
-    sellerId={activeChatConfig.sellerId}
-    buyerId={activeChatConfig.buyerId} 
-    authenticatedUserId={user.id}
-    viewAsMode="buyer"
-    contextMode="tuition" // 
-    onClose={() => setActiveChatConfig(null)} 
-  />
+        <LiveChatModal productId={activeChatConfig.productId} sellerId={activeChatConfig.sellerId} buyerId={activeChatConfig.buyerId} authenticatedUserId={user.id} viewAsMode="buyer" contextMode="tuition" onClose={() => setActiveChatConfig(null)} />
       )}
     </section>
   );
