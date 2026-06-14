@@ -7,7 +7,7 @@ import toast, { Toaster } from "react-hot-toast";
 import HomeLayout from "../Layouts/HomeLayout.jsx";
 
 function ContactSellerPage() {
-  const { courseId } = useParams(); // Safely extract UUID from /book-tutor/:courseId
+  const { courseId } = useParams();
   const navigate = useNavigate();
 
   const [product, setProduct] = useState(null);
@@ -37,7 +37,7 @@ function ContactSellerPage() {
       try {
         setLoading(true);
         
-        // Fetch product listing and join its tutor/seller profile row dynamically
+        
         const { data, error } = await supabase
           .from("products")
           .select("*, tutor_profile:profiles(*)")
@@ -47,7 +47,7 @@ function ContactSellerPage() {
         if (error) throw error;
         setProduct(data);
 
-        // Fetch dependent rows only once we have a valid product configuration
+       
         if (data) {
           fetchSessionAndReviewStatus(data.id);
           fetchPublicReviews(data.seller_id || data.user_id);
@@ -230,7 +230,7 @@ function ContactSellerPage() {
     }
   };
 
-  // 2. Loading State guard matching your style
+  
   if (loading) {
     return (
       <div className="min-h-screen flex justify-center items-center bg-slate-50">
@@ -239,7 +239,7 @@ function ContactSellerPage() {
     );
   }
 
-  // 3. Fallback Route checking
+  
   if (!product) {
     return (
       <div className="min-h-screen flex flex-col justify-center items-center bg-slate-50 p-4">
@@ -254,7 +254,7 @@ function ContactSellerPage() {
     );
   }
 
-  // Safely extract names from unified schema properties
+ 
   const sellerName = product.seller_name || product.tutor_profile?.full_name || "Verified Tutor";
   const sellerLocation = product.location || product.tutor_profile?.location_name || "Nepal";
 
@@ -340,7 +340,7 @@ function ContactSellerPage() {
           </div>
         </div>
 
-        {/* Right Column Aspect Presentation */}
+      
         <div className="flex flex-col justify-between space-y-6">
           <div className="space-y-4">
             <div className="flex flex-wrap items-center gap-2">
@@ -522,13 +522,14 @@ function ContactSellerPage() {
       </div>
 
       {chatActive && product && user && (
-        <LiveChatModal 
-          productId={product.id}
-          sellerId={product.seller_id || product.user_id}
-          buyerId={user.id} 
-          onClose={() => setChatActive(false)}
-        />
-      )}
+       <LiveChatModal 
+    productId={product.id} 
+    sellerId={product.seller_id || product.user_id}
+    buyerId={user.id} 
+    contextMode="product" // 
+    onClose={() => setChatActive(false)}
+  />
+)}
     </div>
         </HomeLayout>
   );

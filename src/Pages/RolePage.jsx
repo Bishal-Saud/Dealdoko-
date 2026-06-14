@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import toast, { Toaster } from 'react-hot-toast';
+import HomeLayout from '../Layouts/HomeLayout.jsx';
 
 function RolePage() {
   const navigate = useNavigate();
@@ -84,6 +85,9 @@ function RolePage() {
   const isPending = profile?.tutor_request_status === "pending_review";
 
   return (
+    <HomeLayout>
+
+   
     <div className="min-h-screen bg-slate-50 py-12 px-4">
       <Toaster />
 
@@ -195,6 +199,7 @@ function RolePage() {
 
       </div>
     </div>
+     </HomeLayout>
   );
 }
 

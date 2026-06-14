@@ -94,16 +94,24 @@ function UserPosts({ user, posts, setPosts }) {
 
     try {
       setCheckingVerification(true);
-
+      
+      
       const { data: profile, error } = await supabase
         .from('profiles')
-        .select('is_verified_seller, is_verified_buyer')
+        .select('is_verified_seller')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase Database Query Error:", error.message);
+      }
 
-      if (profile?.is_verified_seller === true) {
+    
+      const isVerifiedTeacher = 
+        profile?.is_verified_seller === true || 
+        profile?.is_verified_seller === 'true';
+
+      if (isVerifiedTeacher) {
         setActiveChatConfig({
           productId: post.id,
           sellerId: post.user_id, 
@@ -114,16 +122,9 @@ function UserPosts({ user, posts, setPosts }) {
       }
 
     } catch (err) {
-      console.error("Error mapping user verification logs:", err);
-      if (user.is_teacher || user.role === 'teacher') {
-        setActiveChatConfig({
-          productId: post.id,
-          sellerId: post.user_id,
-          buyerId: user.id
-        });
-      } else {
-        setShowRoleModal(true);
-      }
+      console.error("Critical Exception inside handleApplyClick:", err);
+      toast.error("An error occurred while verifying your status.");
+      setShowRoleModal(true);
     } finally {
       setCheckingVerification(false);
     }
@@ -277,7 +278,6 @@ function UserPosts({ user, posts, setPosts }) {
                         </div>
                       )}
 
-                      {/* RESTORED original blur logic without showing any explicit location text */}
                       <div className="flex items-center gap-2 bg-slate-50 px-3 py-2 rounded-xl border border-slate-100 relative overflow-hidden">
                         <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                         {isAuthenticated ? (
@@ -377,14 +377,15 @@ function UserPosts({ user, posts, setPosts }) {
 
       {/* Live Chat Modal */}
       {activeChatConfig && (
-        <LiveChatModal
-          productId={activeChatConfig.productId}
-          sellerId={activeChatConfig.sellerId}
-          buyerId={activeChatConfig.buyerId}
-          authenticatedUserId={user.id}
-          viewAsMode="buyer" 
-          onClose={() => setActiveChatConfig(null)} 
-        />
+<LiveChatModal 
+    productId={activeChatConfig.productId} 
+    sellerId={activeChatConfig.sellerId}
+    buyerId={activeChatConfig.buyerId} 
+    authenticatedUserId={user.id}
+    viewAsMode="buyer"
+    contextMode="tuition" // 
+    onClose={() => setActiveChatConfig(null)} 
+  />
       )}
     </section>
   );

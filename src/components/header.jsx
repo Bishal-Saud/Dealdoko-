@@ -58,7 +58,7 @@ function Header() {
 
   const fetchUserProfileData = async (userId) => {
     try {
-      // 1. Fetch as an array, NO .single()
+     
       const { data, error } = await supabase
         .from("profiles")
         .select("is_verified_seller,location, location_name, full_name, avatar_url")
@@ -85,97 +85,107 @@ function Header() {
   // Listen to Auth status changes
 
   useEffect(() => {
-  const {
-    data: { subscription },
-  } = supabase.auth.onAuthStateChange((_event, session) => {
-    const user = session?.user ?? null;
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      const user = session?.user ?? null;
 
-    setCurrentUser(user);
+      setCurrentUser(user);
 
-    if (user) {
-      (async () => {
-        await supabase.from("profiles").upsert({
-          id: user.id,
-          full_name: user.user_metadata?.full_name,
-          avatar_url: user.user_metadata?.avatar_url,
-          email: user.email,
-          
-        });
+      if (user) {
+        (async () => {
+          await supabase.from("profiles").upsert({
+            id: user.id,
+            full_name: user.user_metadata?.full_name,
+            avatar_url: user.user_metadata?.avatar_url,
+            email: user.email,
+          });
 
-        fetchUserProfileData(user.id);
-      })(); 
-    } else {
-      setIsVerifiedSeller(false);
-      setUserLocation("Invalid Location");
-      setDbFullName("");
-      setDbAvatarUrl("");
-    }
-  });
+          fetchUserProfileData(user.id);
+        })(); 
+      } else {
+        setIsVerifiedSeller(false);
+        setUserLocation("Invalid Location");
+        setDbFullName("");
+        setDbAvatarUrl("");
+      }
+    });
 
-  return () => subscription.unsubscribe();
-}, []);
-
-  // REALTIME SUBSCRIPTION for messages
+    return () => subscription.unsubscribe();
+  }, []);
+// REALTIME SUBSCRIPTION for messages (Fixed with functional state checks)
 
   useEffect(() => {
     if (!currentUser) {
       setHasNewMessage(false);
-
       return;
     }
 
+    // console.log("Setting up Supabase Realtime for user:", currentUser.id);
+
     const chatSubscription = supabase
-
-      .channel("realtime-messages")
-
+      .channel(`header-messages-${currentUser.id}`) // Unique channel per user instance
       .on(
         "postgres_changes",
-
         {
           event: "INSERT",
-
           schema: "public",
-
-          table: "messages",
-
-          filter: `receiver_id=eq.${currentUser.id}`,
+          table: "chat_messages", // 1. FIXED: Matches your table list
         },
+        (payload) => {
+          console.log("Realtime payload arriving raw:", payload);
+          
+          if (!payload.new) return;
 
-        () => {
-          if (!isChatOpen) {
-            setHasNewMessage(true);
+        
+          const cleanSenderId = String(payload.new.sender_id).trim().toLowerCase();
+          const cleanCurrentUserId = String(currentUser.id).trim().toLowerCase();
+
+         
+          if (cleanSenderId !== cleanCurrentUserId) {
+            
+            setIsChatOpen((currentlyOpen) => {
+              if (!currentlyOpen) {
+                console.log("Chat is closed! Lighting up red dot indicator.");
+                setHasNewMessage(true);
+              } else {
+                console.log("Chat is already open, ignoring red dot indicator.");
+              }
+              return currentlyOpen; 
+            });
           }
-        },
+        }
       )
-
-      .subscribe();
+      .subscribe((status) => {
+        console.log("Supabase Subscription Status connection:", status);
+      });
 
     return () => {
+    
       supabase.removeChannel(chatSubscription);
     };
-  }, [currentUser, isChatOpen]);
+  }, [currentUser?.id]); 
+  const handleGoogleLogin = async () => {
+    setLoading(true);
 
-const handleGoogleLogin = async () => {
-  setLoading(true);
-
-  try {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: window.location.origin,
-        queryParams: {
-          prompt: 'select_account',
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: window.location.origin,
+          queryParams: {
+            prompt: 'select_account',
+          },
         },
-      },
-    });
+      });
 
-    if (error) throw error;
-  } catch (error) {
-    console.error("Auth Error:", error);
-    toast.error(error.message || "Failed to initialize Google login.");
-    setLoading(false);
-  }
-};
+      if (error) throw error;
+    } catch (error) {
+      console.error("Auth Error:", error);
+      toast.error(error.message || "Failed to initialize Google login.");
+      setLoading(false);
+    }
+  };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -228,22 +238,22 @@ const handleGoogleLogin = async () => {
     }
   };
 
-const handleLocationBadgeClick = () => {
-  // 1. Check if location is missing or invalid
-  if (userLocation === "Invalid Location" || !userLocation) {
-    // 2. ONLY navigate to verify if the user is logged in
-    if (currentUser) {
-      navigate("/verify");
+  const handleLocationBadgeClick = () => {
+    // 1. Check if location is missing or invalid
+    if (userLocation === "Invalid Location" || !userLocation) {
+      // 2. ONLY navigate to verify if the user is logged in
+      if (currentUser) {
+        navigate("/verify");
+      } else {
+        // If not logged in, trigger the login modal and notify them
+        setIsAuthOpen(true);
+        toast.error("Please log in to verify your location.");
+      }
     } else {
-      // If not logged in, trigger the login modal and notify them
-      setIsAuthOpen(true);
-      toast.error("Please log in to verify your location.");
+      // 3. Navigate to users search if the location is valid
+      navigate(`/users?location=${encodeURIComponent(userLocation)}`);
     }
-  } else {
-    // 3. Navigate to users search if the location is valid
-    navigate(`/users?location=${encodeURIComponent(userLocation)}`);
-  }
-};
+  };
 
   const userFullName =
     dbFullName ||
@@ -255,6 +265,9 @@ const handleLocationBadgeClick = () => {
     dbAvatarUrl ||
     currentUser?.user_metadata?.avatar_url ||
     "https://api.dicebear.com/7.x/bottts/svg?seed=fallback";
+
+
+    
 
   return (
     <div>
@@ -308,9 +321,9 @@ const handleLocationBadgeClick = () => {
                   }
                 >
                   {userLocation 
-  ? (userLocation.length > 15 ? `${userLocation.substring(0, 15)}...` : userLocation)
-  : "Finding Location..."
-}
+                    ? (userLocation.length > 15 ? `${userLocation.substring(0, 15)}...` : userLocation)
+                    : "Finding Location..."
+                  }
                 </span>
 
                 <span className="text-[10px]">▼</span>
