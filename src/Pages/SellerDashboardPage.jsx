@@ -10,6 +10,7 @@ import {
 import ManageOrderPage from "./ManageOrderPage";
 import BuyerChat from "../components/BuyerChat.jsx";
 import ManageCourse from "../components/ManageCourse.jsx";
+import ValidReviews from "../components/ValidReviews.jsx";
 import { Link } from "react-router-dom";
 
 function SellerDashboardPage() {
@@ -55,7 +56,17 @@ function SellerDashboardPage() {
           Performance Board
           </button>
 
-          
+          <button
+            onClick={() => setActiveTab("feedback")}
+            className={`flex-1 md:flex-initial flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black transition whitespace-nowrap ${
+              activeTab === "feedback"
+                ? "bg-blue-600 text-white"
+                : "text-slate-300 hover:bg-slate-800"
+            }`}
+          >
+            <MessageSquare size={16} />
+            Student Feedback
+          </button>
         </nav>
       </aside>
 
@@ -63,12 +74,14 @@ function SellerDashboardPage() {
       <main className="flex-1 p-4 md:p-10 overflow-y-auto">
         {activeTab === "orders" ? (
           <ManageOrderPage />
-        )  : (
+        ) : activeTab === "feedback" ? (
+          <ValidReviews />
+        ) : (
           <ManageCourse />
         )}
       </main>
     </div>
   );
 }
-// Create FEEDBACK TAB SOON
+
 export default SellerDashboardPage;

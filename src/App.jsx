@@ -15,6 +15,7 @@ import AskedQuestionPage from './Pages/AskedQuestionPage.jsx'
 import ContactSellerPage from './Pages/ContactSellerPage.jsx'
 import EditProfilePage from './Pages/EditProfilePage.jsx'
 import NotFound from './context/NotFound.jsx'
+import ProtectedAdmin from './Admin/ProtectedAdmin.jsx'
 
 
 function App() {
@@ -34,6 +35,7 @@ function App() {
         <Route path='/edit-profile' element={<EditProfilePage />} />
         <Route path='/recent-queries' element={<AskedQuestionPage />} />
         <Route path='/book-tutor/:courseId' element={<ContactSellerPage />} />
+      <Route path='/admin' element={<ProtectedAdmin />} />
       
 
         {/* Protected Merchant Console Routes */}
