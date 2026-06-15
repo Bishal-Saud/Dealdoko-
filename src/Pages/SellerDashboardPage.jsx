@@ -20,7 +20,7 @@ function SellerDashboardPage() {
       <Toaster />
 
       {/* SIDEBAR */}
-      <aside className="w-full md:w-64 bg-blue-600 text-white p-6 flex flex-col gap-6 shrink-0 shadow-lg">
+      <aside className="w-full md:w-64 bg-[#112E81] text-white p-6 flex flex-col gap-6 shrink-0 shadow-lg">
         <Link to ="/">
           <h2 className="text-xl font-black tracking-tight text-amber-400 flex items-center gap-2">
             Tol Path <Sparkles size={16} />
@@ -55,17 +55,7 @@ function SellerDashboardPage() {
           Performance Board
           </button>
 
-          <button
-            onClick={() => setActiveTab("messages")}
-            className={`flex-1 md:flex-initial flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black transition whitespace-nowrap ${
-              activeTab === "messages"
-                ? "bg-blue-600 text-white"
-                : "text-slate-300 hover:bg-slate-800"
-            }`}
-          >
-            <MessageSquare size={16} />
-            Student Messages
-          </button>
+          
         </nav>
       </aside>
 
@@ -73,14 +63,12 @@ function SellerDashboardPage() {
       <main className="flex-1 p-4 md:p-10 overflow-y-auto">
         {activeTab === "orders" ? (
           <ManageOrderPage />
-        ) : activeTab === "messages" ? (
-          <BuyerChat />
-        ) : (
+        )  : (
           <ManageCourse />
         )}
       </main>
     </div>
   );
 }
-
+// Create FEEDBACK TAB SOON
 export default SellerDashboardPage;
