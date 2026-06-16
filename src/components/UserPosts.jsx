@@ -6,7 +6,7 @@ import {
   BookOpen, Wallet, Calendar, MapPin, 
   GraduationCap, FileText, ArrowRight, X, ShieldAlert,
   Hash, Map, Lock, MoreVertical, CheckCircle2, Trash2, Edit3,
-  Clock, RefreshCw, AlertTriangle
+  Clock, RefreshCw, AlertTriangle, User, Phone, XCircle
 } from 'lucide-react';
 import LiveChatModal from '../model/LiveChatModel.jsx'; 
 
@@ -21,6 +21,11 @@ function UserPosts({ user, posts, setPosts }) {
   const [openMenuPostId, setOpenMenuPostId] = useState(null);
   const menuRef = useRef(null);
 
+ 
+  const [teacherDetailsModal, setTeacherDetailsModal] = useState({ isOpen: false, postId: null });
+  const [teacherForm, setTeacherForm] = useState({ name: '', phone: '' });
+  const [submittingTeacher, setSubmittingTeacher] = useState(false);
+
   const isAuthenticated = !!user;
 
   useEffect(() => {
@@ -32,6 +37,11 @@ function UserPosts({ user, posts, setPosts }) {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  const isPhoneNumberValid = (number) => {
+    const phoneRegex = /^\d{10}$/;
+    return phoneRegex.test(number);
+  };
 
   const handleGoogleLogin = async () => {
     try {
@@ -78,23 +88,17 @@ function UserPosts({ user, posts, setPosts }) {
           }
         }
 
-        // Order chronologically by default
         const { data, error } = await query.order('updated_at', { ascending: false });
         if (error) throw error;
 
-        // --- LIFECYCLE MANAGEMENT FILTERING ---
         const filteredData = (data || []).filter(post => {
           const isOwnPost = isAuthenticated && user?.id === post.user_id;
           
-          // Calculate if listing has exceeded its 10-day window
           const referenceDate = post.updated_at ? new Date(post.updated_at) : new Date(post.created_at);
           const daysDifference = (new Date() - referenceDate) / (1000 * 60 * 60 * 24);
           const isExpired = daysDifference >= 10;
 
-          // If it's your post, always show it (even if expired, or filled)
           if (isOwnPost) return true;
-
-          // Hide if expired, or if teacher is already found
           if (isExpired || post.status === 'teacher_found') return false;
 
           return true;
@@ -147,7 +151,6 @@ function UserPosts({ user, posts, setPosts }) {
     }
   };
 
-  // --- Post Status Management Handlers ---
   const updatePostStatus = async (postId, newStatus) => {
     try {
       const { error } = await supabase
@@ -166,7 +169,59 @@ function UserPosts({ user, posts, setPosts }) {
     }
   };
 
-  // Renew / Repost function to push visibility out another 10 days
+  const handleTeacherFoundClick = (postId) => {
+    setOpenMenuPostId(null);
+    setTeacherForm({ name: '', phone: '' });
+    setTeacherDetailsModal({ isOpen: true, postId });
+  };
+
+  const handleTeacherSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!teacherForm.name.trim() || !teacherForm.phone.trim()) {
+      toast.error("Please fill in all requested data field rows.");
+      return;
+    }
+
+    if (!isPhoneNumberValid(teacherForm.phone.trim())) {
+      toast.error("Please enter a valid 10-digit Teacher phone number.");
+      return;
+    } 
+
+    try {
+      setSubmittingTeacher(true);
+      
+     
+      const { error: insertError } = await supabase
+        .from('hired_teachers')
+        .insert([{
+          post_id: teacherDetailsModal.postId,
+          parent_id: user.id,
+          teacher_name: teacherForm.name.trim(),
+          teacher_phone: teacherForm.phone.trim()
+        }]);
+
+      if (insertError) throw insertError;
+
+      
+      const { error: updateError } = await supabase
+        .from('tuition_requirements')
+        .update({ status: 'teacher_found' })
+        .eq('id', teacherDetailsModal.postId);
+
+      if (updateError) throw updateError;
+
+      toast.success("Hiring documentation finalized successfully!");
+      setPosts(prev => prev.map(p => p.id === teacherDetailsModal.postId ? { ...p, status: 'teacher_found' } : p));
+      setTeacherDetailsModal({ isOpen: false, postId: null });
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to log specific teacher assignment properties.");
+    } finally {
+      setSubmittingTeacher(false);
+    }
+  };
+
   const handleRenewPost = async (postId) => {
     try {
       const rightNowiso = new Date().toISOString();
@@ -174,7 +229,7 @@ function UserPosts({ user, posts, setPosts }) {
         .from('tuition_requirements')
         .update({ 
           updated_at: rightNowiso,
-          status: 'active' // Resets back to active when bumping visibility
+          status: 'active' 
         })
         .eq('id', postId);
 
@@ -189,25 +244,24 @@ function UserPosts({ user, posts, setPosts }) {
     }
   };
 
-  // const handleEditPost = (postId) => {
-  //   setOpenMenuPostId(null);
-  //   navigate(`/edit-tuition/${postId}`);
-  // };
+ const handleDeletePost = async (postId) => {
+  if (!window.confirm("Are you sure you want to delete this tuition requirement?")) return;
+  try {
+    // Soft delete by updating status configuration flag
+    const { error } = await supabase
+      .from('tuition_requirements')
+      .update({ status: 'deleted' }) 
+      .eq('id', postId);
 
-  const handleDeletePost = async (postId) => {
-    if (!window.confirm("Are you sure you want to delete this tuition requirement?")) return;
-    try {
-      const { error } = await supabase.from('tuition_requirements').delete().eq('id', postId);
-      if (error) throw error;
-      toast.success("Post deleted successfully.");
-      setPosts(prev => prev.filter(p => p.id !== postId));
-    } catch (err) {
-      toast.error("Failed to delete post.");
-    } finally {
-      setOpenMenuPostId(null);
-    }
-  };
-
+    if (error) throw error;
+    toast.success("Post removed successfully.");
+    setPosts(prev => prev.filter(p => p.id !== postId));
+  } catch (err) {
+    toast.error("Failed to remove post.");
+  } finally {
+    setOpenMenuPostId(null);
+  }
+};
   const parseSubjectString = (rawSubject) => {
     if (!rawSubject) return { title: "General Tuition", subtitle: null };
     const match = rawSubject.match(/^(.*?)\s*((?:class|code)?\s*\d+)$/i);
@@ -271,7 +325,6 @@ function UserPosts({ user, posts, setPosts }) {
               const subjectInfo = parseSubjectString(post.subject);
               const isOwnPost = isAuthenticated && user?.id === post.user_id;
               
-              // Recalculate duration metrics inline for ui states
               const referenceDate = post.updated_at ? new Date(post.updated_at) : new Date(post.created_at);
               const daysOld = Math.floor((new Date() - referenceDate) / (1000 * 60 * 60 * 24));
               const isExpired = daysOld >= 10;
@@ -286,7 +339,6 @@ function UserPosts({ user, posts, setPosts }) {
                           Class: {post.class_level || "General"}
                         </span>
                         
-                        {/* Status Label Badges */}
                         {post.status === 'trial_period' && (
                           <span className="bg-blue-50 text-blue-700 text-[10px] font-bold px-2.5 py-1 rounded-lg border border-blue-200 uppercase tracking-wider flex items-center gap-1">
                             <Clock size={10} /> Trial Run
@@ -309,7 +361,6 @@ function UserPosts({ user, posts, setPosts }) {
                           #{post.id?.slice(0, 8)}
                         </div>
 
-                        {/* Three Dots Menu */}
                         {isOwnPost && (
                           <div className="relative" ref={openMenuPostId === post.id ? menuRef : null}>
                             <button onClick={() => setOpenMenuPostId(openMenuPostId === post.id ? null : post.id)} className="p-1 text-slate-500 hover:text-slate-800 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer">
@@ -323,8 +374,13 @@ function UserPosts({ user, posts, setPosts }) {
                                     <Clock size={14} /> Set to Trial Run
                                   </button>
                                 )}
+                                {post.status === 'trial_period' && (
+                                  <button onClick={() => updatePostStatus(post.id, 'active')} className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-amber-700 hover:bg-amber-50 text-left cursor-pointer">
+                                    <XCircle size={14} /> Cancel Trial Period
+                                  </button>
+                                )}
                                 {post.status !== 'teacher_found' && (
-                                  <button onClick={() => updatePostStatus(post.id, 'teacher_found')} className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-emerald-600 hover:bg-emerald-50 text-left cursor-pointer">
+                                  <button onClick={() => handleTeacherFoundClick(post.id)} className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-emerald-600 hover:bg-emerald-50 text-left cursor-pointer">
                                     <CheckCircle2 size={14} /> Mark Teacher Found
                                   </button>
                                 )}
@@ -333,9 +389,6 @@ function UserPosts({ user, posts, setPosts }) {
                                     <RefreshCw size={14} /> Renew Listing (10 Days)
                                   </button>
                                 )}
-                                {/* <button onClick={() => handleEditPost(post.id)} className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 text-left cursor-pointer">
-                                  <Edit3 size={14} /> Edit Request
-                                </button> */}
                                 <div className="border-t border-slate-100 my-1"></div>
                                 <button onClick={() => handleDeletePost(post.id)} className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-50 text-left cursor-pointer">
                                   <Trash2 size={14} /> Delete Listing
@@ -347,7 +400,6 @@ function UserPosts({ user, posts, setPosts }) {
                       </div>
                     </div>
 
-                    {/* Subject info cards */}
                     <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-1">
                       <div className="text-[9px] uppercase font-bold tracking-wider text-slate-400 block">Target Subject</div>
                       <div className="flex items-start gap-2">
@@ -361,7 +413,6 @@ function UserPosts({ user, posts, setPosts }) {
                       </div>
                     </div>
 
-                    {/* Budget & Frequency blocks */}
                     <div className="grid grid-cols-2 gap-3">
                       <div className="flex items-center gap-2.5 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
                         <div className="p-1.5 bg-white rounded-lg text-slate-600 border border-slate-100"><Wallet className="w-3.5 h-3.5" /></div>
@@ -420,7 +471,6 @@ function UserPosts({ user, posts, setPosts }) {
                     </div>
                   </div>
 
-                  {/* Primary Interaction Action Footer */}
                   <div className="mt-5 pt-3 border-t border-slate-100">
                     {isOwnPost ? (
                       isExpired ? (
@@ -459,6 +509,76 @@ function UserPosts({ user, posts, setPosts }) {
                 </div>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {/* Teacher Found / Input Details Modal */}
+      {teacherDetailsModal.isOpen && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl max-w-sm w-full shadow-2xl border border-slate-100 overflow-hidden relative p-6 animate-in zoom-in-95 duration-200">
+            <button 
+              onClick={() => setTeacherDetailsModal({ isOpen: false, postId: null })} 
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <div className="w-12 h-12 bg-emerald-50 rounded-full flex items-center justify-center mb-3 border border-emerald-100">
+              <CheckCircle2 className="w-6 h-6 text-emerald-600" />
+            </div>
+            <h3 className="text-base font-bold text-slate-900 mb-1">Log Assigned Teacher</h3>
+            <p className="text-xs text-slate-500 leading-relaxed mb-4">
+              Enter the teacher's credentials to securely finalize this requirement listing.
+            </p>
+            
+            <form onSubmit={handleTeacherSubmit} className="space-y-4 text-left">
+              <div>
+                <label className="block text-[11px] font-bold uppercase tracking-wide text-slate-400 mb-1">Teacher's Name</label>
+                <div className="relative">
+                  <User className="absolute left-3.5 top-3 w-4 h-4 text-slate-400" />
+                  <input 
+                    required
+                    type="text" 
+                    placeholder="e.g. Ramesh Thapa"
+                    value={teacherForm.name}
+                    onChange={(e) => setTeacherForm(prev => ({ ...prev, name: e.target.value }))}
+                    className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-xl text-xs font-medium focus:outline-hidden focus:border-slate-900 transition-colors"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold uppercase tracking-wide text-slate-400 mb-1">Contact Phone Number</label>
+                <div className="relative">
+                  <Phone className="absolute left-3.5 top-3 w-4 h-4 text-slate-400" />
+                  <input 
+                    required
+                    type="tel" 
+                    placeholder="e.g. 98XXXXXXXX"
+                    value={teacherForm.phone}
+                    onChange={(e) => setTeacherForm(prev => ({ ...prev, phone: e.target.value }))}
+                    className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-xl text-xs font-medium focus:outline-hidden focus:border-slate-900 transition-colors"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2 pt-2">
+                <button 
+                  type="submit" 
+                  disabled={submittingTeacher}
+                  className="w-full bg-slate-900 hover:bg-slate-800 disabled:bg-slate-300 text-white font-bold py-2.5 rounded-xl text-xs transition-colors tracking-wide cursor-pointer"
+                >
+                  {submittingTeacher ? "Saving Records..." : "Confirm & Close Listing"}
+                </button>
+                <button 
+                  type="button"
+                  onClick={() => setTeacherDetailsModal({ isOpen: false, postId: null })} 
+                  className="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-medium py-2 rounded-xl text-xs transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

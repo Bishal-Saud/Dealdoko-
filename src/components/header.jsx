@@ -17,6 +17,7 @@ import {
   Store,
   MessageSquare,
   Users2,
+  Sparkles,
 } from "lucide-react";
 
 import { supabase } from "../api/supabase.js";
@@ -58,7 +59,7 @@ function Header() {
 
   const fetchUserProfileData = async (userId) => {
     try {
-     
+
       const { data, error } = await supabase
         .from("profiles")
         .select("is_verified_seller,location, location_name, full_name, avatar_url")
@@ -73,7 +74,7 @@ function Header() {
       if (data && data.length > 0) {
         const profile = data[0];
         setIsVerifiedSeller(!!profile.is_verified_seller);
-        setUserLocation(profile.location_name );
+        setUserLocation(profile.location_name);
         setDbFullName(profile.full_name || "");
         setDbAvatarUrl(profile.avatar_url || "");
       }
@@ -102,7 +103,7 @@ function Header() {
           });
 
           fetchUserProfileData(user.id);
-        })(); 
+        })();
       } else {
         setIsVerifiedSeller(false);
         setUserLocation("Invalid Location");
@@ -113,7 +114,7 @@ function Header() {
 
     return () => subscription.unsubscribe();
   }, []);
-// REALTIME SUBSCRIPTION for messages (Fixed with functional state checks)
+  // REALTIME SUBSCRIPTION for messages (Fixed with functional state checks)
 
   useEffect(() => {
     if (!currentUser) {
@@ -134,16 +135,16 @@ function Header() {
         },
         (payload) => {
           console.log("Realtime payload arriving raw:", payload);
-          
+
           if (!payload.new) return;
 
-        
+
           const cleanSenderId = String(payload.new.sender_id).trim().toLowerCase();
           const cleanCurrentUserId = String(currentUser.id).trim().toLowerCase();
 
-         
+
           if (cleanSenderId !== cleanCurrentUserId) {
-            
+
             setIsChatOpen((currentlyOpen) => {
               if (!currentlyOpen) {
                 console.log("Chat is closed! Lighting up red dot indicator.");
@@ -151,7 +152,7 @@ function Header() {
               } else {
                 console.log("Chat is already open, ignoring red dot indicator.");
               }
-              return currentlyOpen; 
+              return currentlyOpen;
             });
           }
         }
@@ -161,10 +162,10 @@ function Header() {
       });
 
     return () => {
-    
+
       supabase.removeChannel(chatSubscription);
     };
-  }, [currentUser?.id]); 
+  }, [currentUser?.id]);
   const handleGoogleLogin = async () => {
     setLoading(true);
 
@@ -267,7 +268,7 @@ function Header() {
     "https://api.dicebear.com/7.x/bottts/svg?seed=fallback";
 
 
-    
+
 
   return (
     <div>
@@ -320,7 +321,7 @@ function Header() {
                       : "text-gray-700 font-bold"
                   }
                 >
-                  {userLocation 
+                  {userLocation
                     ? (userLocation.length > 15 ? `${userLocation.substring(0, 15)}...` : userLocation)
                     : "Finding Location..."
                   }
@@ -373,6 +374,12 @@ function Header() {
               className="text-blue-600 font-semibold flex items-center gap-1"
             >
               <Home size={18} /> Home
+            </Link>
+            <Link
+              to="/success-reports"
+              className="text-slate-600 hover:text-emerald-600 font-semibold flex items-center gap-1.5 transition-colors duration-150"
+            >
+              <Sparkles size={18} className="text-emerald-500" /> Success Board
             </Link>
 
             <button

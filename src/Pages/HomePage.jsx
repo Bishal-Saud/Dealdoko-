@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { Helmet } from "react-helmet-async"; 
+import { Link } from "react-router-dom"; // Make sure Link is imported
 import HomeLayout from "../Layouts/HomeLayout";
-import { AlertCircle, Terminal, CheckCircle2, ShieldCheck, Users, PlusCircle } from "lucide-react";
+import { AlertCircle, Terminal, CheckCircle2, ShieldCheck, Users, PlusCircle, Sparkles } from "lucide-react";
 import SocialMedia from "../components/SocialMedia.jsx";
 import Warning from "../components/Warning.jsx";
 import { useAuth } from "../context/AuthProvider.jsx"; 
@@ -15,18 +16,13 @@ import UserPosts from "../components/UserPosts.jsx";
 
 function HomePage() {
   const { user, loading } = useAuth();
-  
-  // ✅ 1. Manage Post Requirement Modal state
   const [isFlowOpen, setIsFlowOpen] = useState(false);
-
-  // ✅ 2. Shared posts state moved ABOVE the early return so it always runs in order!
   const [posts, setPosts] = useState([]);
 
   const handlePostCreated = (newPost) => {
     setPosts((prevPosts) => [newPost, ...prevPosts]);
   };
 
-  // ✅ 3. Early return can safely sit down here now!
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
@@ -37,7 +33,6 @@ function HomePage() {
 
   return (
     <HomeLayout>
-      {/* SEO Meta Tags */}
       <Helmet>
         <title>Find Verified Home Tuition Teachers in Nepal | Tol Path</title>
         <meta 
@@ -49,11 +44,9 @@ function HomePage() {
       </Helmet>
 
       {user && <BecomeATeacherAds is_verified_seller={user.is_verified_seller} />}
-   
-      {/* Geolocation check modal on initialization */}
+      
       <LocationModal user={user} />
 
-      {/* CONNECTED USERFLOW MODAL */}
       <UserFlowModel 
         user={user} 
         isOpen={isFlowOpen} 
@@ -72,19 +65,29 @@ function HomePage() {
             Bridging the gap between students and verified academic mentors. Find qualified home tutors near your city for personalized learning and better grades.
           </p>
 
-          {/* CTA Trigger Button */}
-          {user && (
-            <button
-              onClick={() => setIsFlowOpen(true)}
-              className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2.5 rounded-lg transition-all shadow-md hover:shadow-lg transform active:scale-95 text-sm"
+          {/* Action Buttons Container */}
+          <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
+            {user && (
+              <button
+                onClick={() => setIsFlowOpen(true)}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2.5 rounded-lg transition-all shadow-md hover:shadow-lg transform active:scale-95 text-sm"
+              >
+                <PlusCircle className="w-4 h-4" />
+                Post Your Tuition Requirement
+              </button>
+            )}
+
+            
+            <Link
+              to="/success-reports"
+              className="block md:hidden w-full inline-flex items-center justify-center gap-2 bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100 font-semibold px-5 py-2.5 rounded-lg transition-all shadow-xs text-sm"
             >
-              <PlusCircle className="w-4 h-4" />
-              Post Your Tuition Requirement
-            </button>
-          )}
+              <Sparkles className="w-4 h-4 text-emerald-600 animate-pulse" />
+              View Success Board
+            </Link>
+          </div>
         </section>
 
-        {/* Beautiful Scrollable Feed Panel */}
         <UserPosts user={user} posts={posts} setPosts={setPosts}/>
         
         <HomeTutorModel />

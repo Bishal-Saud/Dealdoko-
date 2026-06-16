@@ -9,7 +9,7 @@ function VerificationPage() {
   const [kycStatus, setKycStatus] = useState('unverified'); 
   const [submitting, setSubmitting] = useState(false);
 
-  // Form Fields
+
   const [phoneNumber, setPhoneNumber] = useState('');
   const [countryCode, setCountryCode] = useState('+977');
   
@@ -65,7 +65,7 @@ function VerificationPage() {
     }
   };
 
-  // Safe tracking synchronization layout 
+
   useEffect(() => {
     if ((kycStatus === 'unverified' || kycStatus === 'rejected') && !latitude && !longitude) {
       handleGetCurrentLocation(false); 
@@ -127,7 +127,7 @@ function VerificationPage() {
     const fullPhoneNumber = `${countryCode}${phoneNumber}`;
 
     try {
-      // Save ONLY basic verification data to standard columns
+ 
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
