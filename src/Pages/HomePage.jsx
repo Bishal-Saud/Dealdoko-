@@ -33,15 +33,7 @@ function HomePage() {
 
   return (
     <HomeLayout>
-      <Helmet>
-        <title> Home Tuition Teachers Near Me | Tol Path</title>
-        <meta 
-          name="description" 
-          content="Connect with the best home tuition teachers across Nepal. Tol Path provides verified, expert tutors for all subjects. Find a tutor near you today for academic success." 
-        />
-        <meta name="keywords" content="home tuition Nepal, home tutor near me, find home tuition teachers , tolpath, tolpath home tutors" />
-        <link rel="canonical" href="https://tolpath.com/" />
-      </Helmet>
+   
 
       {user && <BecomeATeacherAds is_verified_seller={user.is_verified_seller} />}
       
