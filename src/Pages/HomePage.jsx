@@ -34,7 +34,7 @@ function HomePage() {
   return (
     <HomeLayout>
       <Helmet>
-        <title>Find Verified Home Tuition Teachers in Nepal | Tol Path</title>
+        <title> Home Tuition Teachers Near Me | Tol Path</title>
         <meta 
           name="description" 
           content="Connect with the best home tuition teachers across Nepal. Tol Path provides verified, expert tutors for all subjects. Find a tutor near you today for academic success." 
