@@ -39,7 +39,7 @@ function HomePage() {
           name="description" 
           content="Connect with the best home tuition teachers across Nepal. Tol Path provides verified, expert tutors for all subjects. Find a tutor near you today for academic success." 
         />
-        <meta name="keywords" content="home tuition Nepal, home tutor near me, find teachers Kanchanpur, academic support, verified tutors" />
+        <meta name="keywords" content="home tuition Nepal, home tutor near me, find home tuition teachers , tolpath, tolpath home tutors" />
         <link rel="canonical" href="https://tolpath.com/" />
       </Helmet>
 
