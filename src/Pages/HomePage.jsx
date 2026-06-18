@@ -47,7 +47,7 @@ function HomePage() {
       />
 
       <main className="max-w-7xl mx-auto px-4 mt-4 md:mt-8 space-y-6 md:space-y-10">
-        <Warning />
+        
         
         <section className="text-center py-8">
           <h1 className="text-3xl md:text-5xl font-black text-slate-900 mb-4">
@@ -85,7 +85,7 @@ function HomePage() {
         <HomeTutorModel />
         <MapMark />
         <ImportantQuestions />
-        
+        <Warning />
         <SocialMedia />
       </main>
     </HomeLayout>
