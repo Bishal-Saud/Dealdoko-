@@ -1,8 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../api/supabase.js';
-import { CheckCircle2, User, Phone, Sparkles, GraduationCap, Calendar, ArrowRight, TrendingUp, DollarSign } from 'lucide-react';
+import { CheckCircle2, Phone, Sparkles, GraduationCap, Calendar, ArrowRight, TrendingUp, DollarSign } from 'lucide-react';
 import toast from 'react-hot-toast';
 import HomeLayout from '../Layouts/HomeLayout.jsx';
+
+
+function SafeAvatar({ src, name, fallbackClassName }) {
+  const [imgError, setImgError] = useState(false);
+
+  
+  if (!src || imgError) {
+    return (
+      <div className={`${fallbackClassName} w-12 h-12 rounded-full border-2 border-white flex items-center justify-center mx-auto font-bold text-xs select-none`}>
+        {name ? name.charAt(0).toUpperCase() : '?'}
+      </div>
+    );
+  }
+
+  return (
+    <img 
+      src={src} 
+      alt={name} 
+      className="w-12 h-12 rounded-full mx-auto object-cover border-2 border-white ring-1 ring-slate-200"
+      onError={() => setImgError(true)}
+    />
+  );
+}
 
 function SuccessfulResultsPage() {
   const [deals, setDeals] = useState([]);
@@ -14,7 +37,6 @@ function SuccessfulResultsPage() {
       try {
         setLoading(true);
 
-        // 1. Fetch ALL hired transactions without constraints
         const { data: hires, error: hiresError } = await supabase
           .from('hired_teachers')
           .select('id, created_at, teacher_name, teacher_phone, parent_id, post_id, tuition_requirements(subject, budget_per_month)')
@@ -28,13 +50,11 @@ function SuccessfulResultsPage() {
           return;
         }
 
-        // 2. Extract IDs and Phones carefully for cross-referencing
         const parentIds = hires.map(h => h.parent_id).filter(Boolean);
         const teacherPhones = hires
           .map(h => h.teacher_phone?.trim())
           .filter(Boolean);
 
-        // 3. Concurrent requests to find profiles if they exist
         const [parentsResponse, teachersResponse] = await Promise.all([
           parentIds.length > 0 
             ? supabase.from('profiles').select('id, full_name, avatar_url').in('id', parentIds)
@@ -47,13 +67,25 @@ function SuccessfulResultsPage() {
         const parentProfiles = parentsResponse.data || [];
         const verifiedTeacherProfiles = teachersResponse.data || [];
 
-        // 4. Combine data securely with foolproof fallbacks so records ALWAYS show up beautifully
         let dynamicVolume = 0;
         const combinedData = hires.map(hire => {
-          const matchedParent = parentProfiles.find(p => p.id === hire.parent_id);
+          const matchedParent = parentProfiles.find(p => 
+            p.id?.toString().trim() === hire.parent_id?.toString().trim()
+          );
           const matchedTeacherProfile = verifiedTeacherProfiles.find(t => 
             t.phone_number?.trim() === hire.teacher_phone?.trim()
           );
+
+          const getAbsoluteAvatarUrl = (avatarUrlPath) => {
+            if (!avatarUrlPath) return null;
+            if (avatarUrlPath.startsWith('http')) return avatarUrlPath;
+            
+            const { data } = supabase.storage
+              .from('avatars') 
+              .getPublicUrl(avatarUrlPath);
+              
+            return data?.publicUrl || null;
+          };
 
           const currentBudget = hire.tuition_requirements?.budget_per_month || 0;
           dynamicVolume += currentBudget;
@@ -64,15 +96,13 @@ function SuccessfulResultsPage() {
             subject: hire.tuition_requirements?.subject || 'General Tuition',
             budget: currentBudget,
             teacher: {
-              // Priority 1: Profile Name | Priority 2: Stored Contract Name | Fallback: Registered Tutor
               name: matchedTeacherProfile?.full_name || hire.teacher_name || 'Independent Tutor',
               phone: hire.teacher_phone || 'Verified Line',
-              avatar: matchedTeacherProfile?.avatar_url || null 
+              avatar: getAbsoluteAvatarUrl(matchedTeacherProfile?.avatar_url)
             },
             parent: {
-              // Priority 1: Profile Name | Fallback: Standard client label
               name: matchedParent?.full_name || 'Anonymous Parent',
-              avatar: matchedParent?.avatar_url || null
+              avatar: getAbsoluteAvatarUrl(matchedParent?.avatar_url)
             }
           };
         });
@@ -124,7 +154,7 @@ function SuccessfulResultsPage() {
             </p>
           </div>
 
-          {/* Minimalist Dashboard Metrics to show off Success/Earnings */}
+          {/* Metrics Dashboard */}
           {deals.length > 0 && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
               <div className="bg-white border border-slate-200 p-5 rounded-2xl flex items-center gap-4 shadow-2xs">
@@ -155,20 +185,17 @@ function SuccessfulResultsPage() {
               <p className="text-xs text-slate-500 mt-1">Hiring logs display here publicly as soon as requirements close.</p>
             </div>
           ) : (
-            /* Responsive Grid System showing ALL records */
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {deals.map((deal) => (
                 <div 
                   key={deal.id} 
                   className="bg-white border border-slate-200 rounded-2xl p-6 hover:shadow-md hover:border-slate-300 transition-all duration-200 flex flex-col justify-between group relative"
                 >
-                  {/* Status Stamped Accent */}
                   <div className="absolute top-0 right-0 bg-emerald-600 text-white px-3 py-1 rounded-bl-xl text-[9px] font-black uppercase tracking-widest flex items-center gap-1">
                     <CheckCircle2 size={10} /> Deal Closed
                   </div>
 
                   <div className="space-y-5">
-                    {/* Header: Class subject info meta details */}
                     <div className="flex items-start justify-between pr-24">
                       <div>
                         <h3 className="text-base font-black text-slate-900 capitalize leading-tight">
@@ -191,17 +218,11 @@ function SuccessfulResultsPage() {
                       
                       {/* Left: Parent Node */}
                       <div className="col-span-3 text-center space-y-2">
-                        {deal.parent.avatar ? (
-                          <img 
-                            src={deal.parent.avatar} 
-                            alt={deal.parent.name} 
-                            className="w-12 h-12 rounded-full mx-auto object-cover border-2 border-white ring-1 ring-slate-200"
-                          />
-                        ) : (
-                          <div className="w-12 h-12 rounded-full bg-slate-800 border-2 border-white ring-1 ring-slate-950/10 flex items-center justify-center mx-auto text-white font-bold text-xs">
-                            {deal.parent.name.charAt(0).toUpperCase()}
-                          </div>
-                        )}
+                        <SafeAvatar 
+                          src={deal.parent.avatar} 
+                          name={deal.parent.name} 
+                          fallbackClassName="bg-slate-800 text-white ring-1 ring-slate-950/10"
+                        />
                         <div className="space-y-0.5">
                           <p className="text-[9px] uppercase font-black text-slate-400 tracking-wider">Client Parent</p>
                           <p className="text-xs font-bold text-slate-800 truncate max-w-[110px] mx-auto">{deal.parent.name}</p>
@@ -217,17 +238,11 @@ function SuccessfulResultsPage() {
 
                       {/* Right: Resolved Teacher Node */}
                       <div className="col-span-3 text-center space-y-2">
-                        {deal.teacher.avatar ? (
-                          <img 
-                            src={deal.teacher.avatar} 
-                            alt={deal.teacher.name} 
-                            className="w-12 h-12 rounded-full mx-auto object-cover border-2 border-white ring-1 ring-slate-200"
-                          />
-                        ) : (
-                          <div className="w-12 h-12 rounded-full bg-emerald-50 border-2 border-white ring-1 ring-emerald-200 flex items-center justify-center mx-auto text-emerald-700 font-bold text-xs">
-                            {deal.teacher.name.charAt(0).toUpperCase()}
-                          </div>
-                        )}
+                        <SafeAvatar 
+                          src={deal.teacher.avatar} 
+                          name={deal.teacher.name} 
+                          fallbackClassName="bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
+                        />
                         <div className="space-y-0.5">
                           <p className="text-[9px] uppercase font-black text-emerald-600 tracking-wider flex items-center justify-center gap-0.5">
                             <GraduationCap size={10} /> Appointed Teacher
@@ -239,7 +254,7 @@ function SuccessfulResultsPage() {
                     </div>
                   </div>
 
-                  {/* Footing Log System Markers */}
+                  {/* Footer Log System Markers */}
                   <div className="mt-5 pt-3.5 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-400 font-medium">
                     <span className="font-mono bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md text-[9px]">
                       REC_{deal.id.slice(0, 6).toUpperCase()}

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "../api/supabase.js";
 import toast, { Toaster } from "react-hot-toast";
-import { User, Mail, Smartphone, Upload, Loader2, KeyRound } from "lucide-react";
+import { User, Mail, Smartphone, Upload, Loader2 } from "lucide-react";
 import HomeLayout from "../Layouts/HomeLayout.jsx";
 
 function EditProfilePage() {
@@ -10,7 +10,7 @@ function EditProfilePage() {
   
   // Profile Form States
   const [userId, setUserId] = useState(null);
-  const [email, setEmail] = useState(""); // Display only (Google Auth)
+  const [email, setEmail] = useState(""); 
   const [fullName, setFullName] = useState("");
   const [username, setUsername] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -50,7 +50,11 @@ function EditProfilePage() {
           if (profile) {
             setFullName(profile.full_name || "");
             setUsername(profile.username || "");
-            setPhoneNumber(profile.phone_number || "");
+            
+            // Sanitize initial values coming from database just in case old formats exist
+            const sanitizedPhone = (profile.phone_number || "").replace(/\D/g, "");
+            setPhoneNumber(sanitizedPhone);
+            
             setAvatarUrl(profile.avatar_url || "");
             setAvatarPreview(profile.avatar_url || null);
           }
@@ -72,7 +76,6 @@ function EditProfilePage() {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // Limit file size to 2MB for safety
       if (file.size > 2 * 1024 * 1024) {
         toast.error("Image file size must be less than 2MB.");
         return;
@@ -99,7 +102,6 @@ function EditProfilePage() {
 
       if (uploadError) throw uploadError;
 
-      // Extract public link to save into database row
       const { data } = supabase.storage.from("avatars").getPublicUrl(filePath);
       return data.publicUrl;
     } catch (error) {
@@ -123,7 +125,6 @@ function EditProfilePage() {
         .toLowerCase()
         .replace(/\s+/g, "");
 
-      // If a new local image file is picked, process storage upload first
       if (avatarFile) {
         const uploadedUrl = await uploadAvatarImage(userId, avatarFile);
         if (uploadedUrl) {
@@ -134,12 +135,12 @@ function EditProfilePage() {
         }
       }
 
-      // Upsert profile data object mapping
+      // Upsert profile data object mapping (phoneNumber is already pure digits)
       const updates = {
         id: userId,
         full_name: fullName.trim(),
         username: cleanedUsername,
-        phone_number: phoneNumber.trim(),
+        phone_number: phoneNumber, 
         avatar_url: finalAvatarUrl,
       };
 
@@ -150,7 +151,6 @@ function EditProfilePage() {
       if (error) throw error;
 
       // Sync data back up cleanly to Auth Metadata context too 
-      // This keeps your Header components synchronized without full page hard reloads!
       await supabase.auth.updateUser({
         data: { 
           full_name: fullName.trim(),
@@ -160,7 +160,7 @@ function EditProfilePage() {
       });
 
       toast.success("Profile updated successfully!");
-      setAvatarFile(null); // Clear active file pointer state
+      setAvatarFile(null); 
     } catch (error) {
       toast.error(error.message || "An error occurred while updating your profile.");
     } finally {
@@ -181,153 +181,152 @@ function EditProfilePage() {
 
   return (
     <HomeLayout>
-
-  
-    <div className="min-h-screen bg-gray-50/50 py-10 px-4 sm:px-6 lg:px-8 pb-24 md:pb-12">
-      <Toaster />
-      <div className="max-w-2xl mx-auto bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
-        
-        {/* Settings Branding Bar */}
-        <div className="p-6 md:p-8 bg-linear-to-r from-blue-50 to-indigo-50 border-b border-gray-100">
-          <h1 className="text-2xl font-black text-gray-900 tracking-tight">Account Settings</h1>
-          <p className="text-sm text-gray-500 mt-1">Manage your public profile identity, contact values, and avatars.</p>
-        </div>
-
-        <form onSubmit={handleUpdateProfile} className="p-6 md:p-8 space-y-6">
+      <div className="min-h-screen bg-gray-50/50 py-10 px-4 sm:px-6 lg:px-8 pb-24 md:pb-12">
+        <Toaster />
+        <div className="max-w-2xl mx-auto bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
           
-          {/* AVATAR PICTURE ROW DESIGN */}
-          <div className="flex flex-col sm:flex-row items-center gap-6 pb-6 border-b border-gray-100">
-            <div className="relative group">
-              <div className="w-24 h-24 bg-gray-100 rounded-full border-2 border-gray-200 shadow-xs overflow-hidden flex items-center justify-center">
-                {avatarPreview ? (
-                  <img 
-                    src={avatarPreview} 
-                    alt="Avatar preview" 
-                    className="w-full h-full object-cover"
+          {/* Settings Branding Bar */}
+          <div className="p-6 md:p-8 bg-linear-to-r from-blue-50 to-indigo-50 border-b border-gray-100">
+            <h1 className="text-2xl font-black text-gray-900 tracking-tight">Account Settings</h1>
+            <p className="text-sm text-gray-500 mt-1">Manage your public profile identity, contact values, and avatars.</p>
+          </div>
+
+          <form onSubmit={handleUpdateProfile} className="p-6 md:p-8 space-y-6">
+            
+            {/* AVATAR PICTURE ROW DESIGN */}
+            <div className="flex flex-col sm:flex-row items-center gap-6 pb-6 border-b border-gray-100">
+              <div className="relative group">
+                <div className="w-24 h-24 bg-gray-100 rounded-full border-2 border-gray-200 shadow-xs overflow-hidden flex items-center justify-center">
+                  {avatarPreview ? (
+                    <img 
+                      src={avatarPreview} 
+                      alt="Avatar preview" 
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <User className="w-10 h-10 text-gray-400" />
+                  )}
+                </div>
+                <label className="absolute bottom-0 right-0 p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-md cursor-pointer transition active:scale-95">
+                  <Upload size={14} />
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    onChange={handleFileChange} 
+                    className="hidden" 
                   />
-                ) : (
-                  <User className="w-10 h-10 text-gray-400" />
+                </label>
+              </div>
+              <div className="text-center sm:text-left space-y-1">
+                <h3 className="text-sm font-bold text-gray-800">Profile Photo</h3>
+                <p className="text-xs text-gray-400">Accepts PNG, JPEG or WebP formats. Max capacity size threshold capped at 2MB.</p>
+                {avatarFile && (
+                  <span className="inline-block text-[11px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded-md font-medium">
+                    New picture selected
+                  </span>
                 )}
               </div>
-              <label className="absolute bottom-0 right-0 p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-md cursor-pointer transition active:scale-95">
-                <Upload size={14} />
-                <input 
-                  type="file" 
-                  accept="image/*" 
-                  onChange={handleFileChange} 
-                  className="hidden" 
-                />
-              </label>
             </div>
-            <div className="text-center sm:text-left space-y-1">
-              <h3 className="text-sm font-bold text-gray-800">Profile Photo</h3>
-              <p className="text-xs text-gray-400">Accepts PNG, JPEG or WebP formats. Max capacity size threshold capped at 2MB.</p>
-              {avatarFile && (
-                <span className="inline-block text-[11px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded-md font-medium">
-                  New picture selected
-                </span>
-              )}
-            </div>
-          </div>
 
-          {/* DATA INPUT GRIDS */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            
-            {/* FULL NAME INPUT */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-gray-600 uppercase tracking-wider">Full Name</label>
-              <div className="relative">
-                <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-400">
-                  <User size={16} />
-                </span>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. John Doe"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition"
-                />
+            {/* DATA INPUT GRIDS */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              
+              {/* FULL NAME INPUT */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-gray-600 uppercase tracking-wider">Full Name</label>
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-400">
+                    <User size={16} />
+                  </span>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. John Doe"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition"
+                  />
+                </div>
               </div>
-            </div>
 
-            {/* UNIQUE USERNAME INPUT */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-gray-600 uppercase tracking-wider">Username</label>
-              <div className="relative">
-                <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 font-bold text-blue-500 text-sm">
-                  @
-                </span>
-                <input
-                  type="text"
-                  required
-                  placeholder="username123"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  className="w-full pl-8 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none font-mono text-blue-600 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition"
-                />
+              {/* UNIQUE USERNAME INPUT */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-gray-600 uppercase tracking-wider">Username</label>
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 font-bold text-blue-500 text-sm">
+                    @
+                  </span>
+                  <input
+                    type="text"
+                    required
+                    placeholder="username123"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    className="w-full pl-8 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none font-mono text-blue-600 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition"
+                  />
+                </div>
               </div>
-            </div>
 
-            {/* EMAIL ADRESS LAYER (LOCKED DISALLOWED ALTERATIONS IN FRONTEND FOR GOOGLE AUTH SIGN UPS) */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1">
-                Email Address <span className="text-[10px] lowercase text-gray-400 font-normal">(Managed by Google)</span>
-              </label>
-              <div className="relative">
-                <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-400">
-                  <Mail size={16} />
-                </span>
-                <input
-                  type="email"
-                  disabled
-                  value={email}
-                  className="w-full pl-10 pr-4 py-2.5 bg-gray-100 border border-gray-200 text-gray-400 rounded-xl text-sm select-none outline-none cursor-not-allowed"
-                />
+              {/* EMAIL ADDRESS LAYER */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1">
+                  Email Address <span className="text-[10px] lowercase text-gray-400 font-normal">(Managed by Google)</span>
+                </label>
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-400">
+                    <Mail size={16} />
+                  </span>
+                  <input
+                    type="email"
+                    disabled
+                    value={email}
+                    className="w-full pl-10 pr-4 py-2.5 bg-gray-100 border border-gray-200 text-gray-400 rounded-xl text-sm select-none outline-none cursor-not-allowed"
+                  />
+                </div>
               </div>
-            </div>
 
-            {/* PHONE NUMBER VALUE BOX */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-gray-600 uppercase tracking-wider">Phone Number</label>
-              <div className="relative">
-                <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-400">
-                  <Smartphone size={16} />
-                </span>
-                <input
-                  type="tel"
-                  placeholder="+977 98XXXXXXXX"
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition"
-                />
+              {/* PHONE NUMBER VALUE BOX (RESTRICTED TO DIGITS ONLY) */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-gray-600 uppercase tracking-wider">Phone Number</label>
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-400">
+                    <Smartphone size={16} />
+                  </span>
+                  <input
+                    type="tel"
+                    placeholder="98XXXXXXXX"
+                    value={phoneNumber}
+                    // Real-time sanitation blocks characters like +, space, and country codes
+                    onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ""))}
+                    className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition"
+                  />
+                </div>
               </div>
+
             </div>
 
-          </div>
+            {/* SUBMISSION FOOTER REGION */}
+            <div className="pt-4 border-t border-gray-100 flex items-center justify-end">
+              <button
+                type="submit"
+                disabled={updating}
+                className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md transition flex items-center gap-2 disabled:bg-blue-400 disabled:cursor-not-allowed text-sm"
+              >
+                {updating ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Saving Updates...</span>
+                  </>
+                ) : (
+                  <span>Save Modifications</span>
+                )}
+              </button>
+            </div>
 
-          {/* SUBMISSION FOOTER REGION */}
-          <div className="pt-4 border-t border-gray-100 flex items-center justify-end">
-            <button
-              type="submit"
-              disabled={updating}
-              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md transition flex items-center gap-2 disabled:bg-blue-400 disabled:cursor-not-allowed text-sm"
-            >
-              {updating ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Saving Updates...</span>
-                </>
-              ) : (
-                <span>Save Modifications</span>
-              )}
-            </button>
-          </div>
-
-        </form>
+          </form>
+        </div>
       </div>
-    </div>
-      </HomeLayout>
+    </HomeLayout>
   );
 }
 
