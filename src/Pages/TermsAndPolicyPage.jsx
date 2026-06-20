@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ShieldCheck, FileText, Scale, Eye, HeartHandshake, CheckCircle2 } from 'lucide-react';
 import HomeLayout from '../Layouts/HomeLayout';
 
@@ -6,7 +6,9 @@ function TermsAndPolicyPage() {
   const [activeTab, setActiveTab] = useState('terms'); // 'terms', 'privacy', or 'safety'
 
   const lastUpdated = "June 2026";
-
+useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
   return (
     <HomeLayout>
 
