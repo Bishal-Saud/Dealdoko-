@@ -1,9 +1,12 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { HelpCircle, Search, CheckCircle2, BookOpen, Clock, MapPin } from 'lucide-react';
 import { Helmet } from 'react-helmet-async'; // Recommended for SEO
 import HomeLayout from '../Layouts/HomeLayout';
 
 function AskedQuestionPage() {
+  useEffect(() => {
+      window.scrollTo(0, 0);
+    }, []);
  const faqs = [
   {
     q: "How can I find the best home tutor near me in Nepal?",
