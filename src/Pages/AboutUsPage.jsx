@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { 
   GraduationCap, 
   MapPin, 
@@ -22,7 +22,9 @@ import HomeLayout from '../Layouts/HomeLayout';
 import SocialMedia from '../components/SocialMedia';
 
 function AboutUsPage() {
-
+useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
   const team = [
     {
       name: "Bishal Saud",
