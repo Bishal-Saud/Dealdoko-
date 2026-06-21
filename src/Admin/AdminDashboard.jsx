@@ -1,17 +1,21 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "../api/supabase.js"; 
 import { toast, Toaster } from "react-hot-toast";
-import Courses from "./components/Courses.jsx"; 
+import { Link, useNavigate } from "react-router-dom";
 import { 
   Search, ShieldCheck, Users, BookOpen, FileText, MessageSquare 
 } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+
+// Workspace Views Imports
 import AdminProfiles from "./components/AdminProfiles.jsx";
+import Courses from "./components/Courses.jsx"; 
+import TuitionRequirements from "./components/TuitionRequirements.jsx"; // 👈 Fixed missing import
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("profiles"); 
   const [profiles, setProfiles] = useState([]);
   const [products, setProducts] = useState([]);
+  const [requirements, setRequirements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
@@ -38,7 +42,7 @@ export default function AdminDashboard() {
       const { data: { user }, error: authError } = await supabase.auth.getUser();
       if (authError || !user) {
         toast.error("Unauthorized. Please sign in.");
-        navigate("/login"); // Route to your login page
+        navigate("/login"); 
         return;
       }
 
@@ -51,7 +55,7 @@ export default function AdminDashboard() {
 
       if (fetchError || !profile?.is_admin) {
         toast.error("Access Denied: You are not an administrator.");
-        navigate("/"); // Bounce out to home view
+        navigate("/"); 
         return;
       }
 
@@ -68,6 +72,7 @@ export default function AdminDashboard() {
 
   const fetchAllData = async () => {
     try {
+      // Fetch Profiles
       const { data: profileData, error: profileErr } = await supabase
         .from("profiles")
         .select("*")
@@ -75,6 +80,15 @@ export default function AdminDashboard() {
       if (profileErr) throw profileErr;
       setProfiles(profileData || []);
 
+      // Fetch Tuition Requirements 
+      const { data: reqData, error: reqErr } = await supabase
+        .from("tuition_requirements")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (reqErr) throw reqErr;
+      setRequirements(reqData || []);
+
+      // Fetch Products/Courses
       const { data: productData, error: productErr } = await supabase
         .from("products")
         .select(`
@@ -164,14 +178,23 @@ export default function AdminDashboard() {
     }
   };
 
-  const filteredProfiles = profiles.filter((profile) => {
-    const q = searchQuery.toLowerCase();
-    return (
-      (profile.email && profile.email.toLowerCase().includes(q)) ||
-      (profile.full_name && profile.full_name.toLowerCase().includes(q)) ||
-      (profile.username && profile.username.toLowerCase().includes(q))
-    );
-  });
+  const handleCourseDeletion = async (courseId) => {
+    if (!window.confirm("Are you sure you want to delete this course item?")) return;
+    try {
+      const { error } = await supabase
+        .from("products")
+        .delete()
+        .eq("id", courseId);
+
+      if (error) throw error;
+
+      setProducts((prevProducts) => prevProducts.filter((product) => product.id !== courseId));
+      toast.success("Course entry permanently scrubbed from schema tables!");
+    } catch (err) {
+      console.error("Error executing row delete command:", err.message);
+      toast.error("Database deletion request failed");
+    }
+  };
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto p-4 md:p-8 text-slate-800">
@@ -181,16 +204,20 @@ export default function AdminDashboard() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-5">
         <div>
           <h1 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-           <Link to='/' >Admin Console </Link>  <ShieldCheck className="text-blue-600" size={24} />
+            <Link to='/' className="hover:text-blue-600 transition">Admin Console</Link>
+            <ShieldCheck className="text-blue-600" size={24} />
           </h1>
           <p className="text-sm text-slate-500 mt-0.5">
-            Manage tuition profiles, course listings, reviews, and assignments database records directly.
+            Manage tuition profiles, course listings, requirements, and assignments database records directly.
           </p>
         </div>
         
         <div className="flex items-center gap-3 font-medium text-xs">
           <div className="bg-slate-100 border px-3 py-1.5 rounded-lg text-slate-600">
             Profiles: <span className="font-bold text-slate-900">{profiles.length}</span>
+          </div>
+          <div className="bg-slate-100 border px-3 py-1.5 rounded-lg text-slate-600">
+            Requirements: <span className="font-bold text-slate-900">{requirements.length}</span>
           </div>
           <div className="bg-slate-100 border px-3 py-1.5 rounded-lg text-slate-600">
             Products/Tuition: <span className="font-bold text-slate-900">{products.length}</span>
@@ -225,12 +252,15 @@ export default function AdminDashboard() {
         </button>
 
         <button
-          className="flex items-center gap-2 px-5 py-3 text-xs font-bold tracking-wide border-b-2 border-transparent text-slate-400 cursor-not-allowed"
-          disabled
-          title="Placeholder for tuition table extension"
+          onClick={() => { setActiveTab("requirements"); setSearchQuery(""); }}
+          className={`flex items-center gap-2 px-5 py-3 text-xs font-bold tracking-wide border-b-2 transition ${
+            activeTab === "requirements" // 👈 Fixed conditional evaluation rule error
+              ? "border-blue-600 text-blue-600 bg-blue-50/40 rounded-t-xl"
+              : "border-transparent text-slate-500 hover:text-slate-900 hover:bg-slate-50 rounded-t-xl"
+          }`}
         >
           <FileText size={15} />
-          Tuition Requirements (Soon)
+          Tuition Requirements 
         </button>
 
         <button
@@ -251,6 +281,8 @@ export default function AdminDashboard() {
           placeholder={
             activeTab === "profiles" 
               ? "Filter profiles list by username, email string, or full name..." 
+              : activeTab === "requirements"
+              ? "Filter student queries by subject theme, grade level or district map area..."
               : "Filter course catalog by lesson title, seller name, subject or target class grade..."
           }
           value={searchQuery}
@@ -260,38 +292,48 @@ export default function AdminDashboard() {
       </div>
 
       {/* RUNTIME FEEDBACK & VIEW CONDITIONAL RENDERING */}
-   {loading ? (
-  <div className="flex flex-col items-center justify-center py-20 gap-2">
-    <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-    <span className="text-xs text-slate-400 font-semibold">Pulling Supabase schema tables...</span>
-  </div>
-) : (
-  <>
-    {/* VIEW 1: MODULAR PROFILES LAYER */}
-    {activeTab === "profiles" && (
-      <AdminProfiles 
-        profiles={profiles}
-        searchQuery={searchQuery}
-        onEditClick={(user) => {
-          setSelectedProfile({ ...user });
-          setIsEditModalOpen(true);
-        }}
-      />
-    )}
+      {loading ? (
+        <div className="flex flex-col items-center justify-center py-20 gap-2">
+          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+          <span className="text-xs text-slate-400 font-semibold">Pulling Supabase schema tables...</span>
+        </div>
+      ) : (
+        <>
+          {/* VIEW 1: MODULAR PROFILES LAYER */}
+          {activeTab === "profiles" && (
+            <AdminProfiles 
+              profiles={profiles}
+              searchQuery={searchQuery}
+              onEditClick={(user) => {
+                setSelectedProfile({ ...user });
+                setIsEditModalOpen(true);
+              }}
+            />
+          )}
 
-    {/* VIEW 2: MODULAR PRODUCTS LAYER */}
-    {activeTab === "products" && (
-      <Courses 
-        products={products} 
-        searchQuery={searchQuery} 
-        onEditClick={(course) => {
-          setSelectedCourse({ ...course });
-          setIsEditCourseModalOpen(true);
-        }}
-      />
-    )}
-  </>
-)}
+          {/* VIEW 2: MODULAR PRODUCTS LAYER */}
+          {activeTab === "products" && (
+            <Courses 
+              products={products} 
+              searchQuery={searchQuery} 
+              onEditClick={(course) => {
+                setSelectedCourse({ ...course });
+                setIsEditCourseModalOpen(true);
+              }}
+              onDeleteClick={handleCourseDeletion}
+            />
+          )}
+
+          {/* VIEW 3: TUITION REQUIREMENTS LAYER */}
+          {activeTab === "requirements" && (
+            <TuitionRequirements 
+              requirements={requirements}
+              setRequirements={setRequirements}
+              searchQuery={searchQuery}
+            />
+          )}
+        </>
+      )}
 
       {/* EDIT MODAL WINDOW (PROFILES) */}
       {isEditModalOpen && selectedProfile && (
@@ -322,14 +364,13 @@ export default function AdminDashboard() {
                   <select
                     value={selectedProfile.verification_status || "pending"}
                     onChange={(e) => setSelectedProfile({ ...selectedProfile, verification_status: e.target.value })}
-                    className="w-full border border-slate-200 bg-slate-50 rounded-xl px-3 py-2 text-sm font-bold focus:outline-none focus:border-blue-500"
+                    className="w-full border border-slate-200 bg-slate-50 rounded-xl px-3 py-2 text-sm font-bold focus:outline-none focus:border-blue-500 text-slate-700"
                   >
                     <option value="pending">Pending</option>
                     <option value="verified">Verified</option>
                     <option value="unverified">Unverified</option>
                   </select>
                 </div>
-
               </div>
 
               <div className="bg-slate-50 border p-3 rounded-xl flex justify-around">

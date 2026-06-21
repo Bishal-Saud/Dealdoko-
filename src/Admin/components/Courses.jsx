@@ -1,8 +1,8 @@
 import React from "react";
-import { Tag, Edit2 } from "lucide-react";
+import { Tag, Edit2, Trash2 } from "lucide-react";
 
-export default function Courses({ products, searchQuery, onEditClick }) {
-  // Filter course catalog dataset dynamically based on parent search string
+export default function Courses({ products, searchQuery, onEditClick, onDeleteClick }) {
+
   const filteredProducts = products.filter((product) => {
     const q = searchQuery.toLowerCase();
     return (
@@ -20,6 +20,14 @@ export default function Courses({ products, searchQuery, onEditClick }) {
       </div>
     );
   }
+
+  
+  const handleConfirmDelete = (product) => {
+    const confirmation = window.confirm(`Are you sure you want to permanently delete "${product.title}"? This action cannot be undone.`);
+    if (confirmation && onDeleteClick) {
+      onDeleteClick(product.id);
+    }
+  };
 
   return (
     <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
@@ -39,8 +47,7 @@ export default function Courses({ products, searchQuery, onEditClick }) {
           <tbody className="divide-y divide-slate-100 text-xs font-medium text-slate-700">
             {filteredProducts.map((product) => (
               <tr key={product.id} className="hover:bg-slate-50/60 transition">
-                
-                {/* Title block */}
+  
                 <td className="p-4 max-w-[220px]">
                   <div className="flex items-center gap-3">
                     {product.image_url ? (
@@ -55,7 +62,6 @@ export default function Courses({ products, searchQuery, onEditClick }) {
                   </div>
                 </td>
 
-                {/* Instructor detail row */}
                 <td className="p-4">
                   <div className="space-y-0.5">
                     <span className="font-bold text-slate-900 text-xs block">{product.seller_name || "Unknown Teacher"}</span>
@@ -63,7 +69,7 @@ export default function Courses({ products, searchQuery, onEditClick }) {
                   </div>
                 </td>
 
-                {/* Classification parameters */}
+              
                 <td className="p-4">
                   <div className="flex flex-col gap-1">
                     <span className="inline-flex items-center gap-1 text-[10px] font-bold text-blue-700 uppercase bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100 w-max">
@@ -72,21 +78,21 @@ export default function Courses({ products, searchQuery, onEditClick }) {
                   </div>
                 </td>
 
-                {/* Target class information data fields */}
+        
                 <td className="p-4 space-y-0.5">
                   <div>Subject: <span className="font-bold text-slate-900">{product.subject || "N/A"}</span></div>
                   <div>Class: <span className="font-semibold text-slate-800">{product.target_class || "N/A"}</span></div>
                   <div className="text-[10px] text-slate-400">Timing: {product.timing || "Not set"}</div>
                 </td>
 
-                {/* Active deals engagement columns */}
+           
                 <td className="p-4 font-mono text-[11px] space-y-0.5">
                   <div className="text-emerald-600 font-bold">Deals Done: {product.successful_deals || 0}</div>
                   <div className="text-purple-600">Active Assignments: {product.active_assignments || 0}</div>
                   <div className="text-slate-400 text-[10px]">Parents: {product.active_parents || 0} active / {product.deal_parents || 0} total</div>
                 </td>
 
-                {/* Ledger financials info formatting */}
+              
                 <td className="p-4 text-right font-mono">
                   <div className="text-slate-900 font-bold text-sm">Rs.{product.price?.toLocaleString() || 0}</div>
                   <div className="text-emerald-600 text-[10px] mt-0.5">
@@ -94,15 +100,26 @@ export default function Courses({ products, searchQuery, onEditClick }) {
                   </div>
                 </td>
 
-                {/* Interactive Action Controls Column */}
                 <td className="p-4 text-center">
-                  <button
-                    onClick={() => onEditClick(product)}
-                    className="p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition"
-                    title="Edit course metrics"
-                  >
-                    <Edit2 size={14} />
-                  </button>
+                  <div className="flex items-center justify-center gap-1">
+                    <button
+                      onClick={() => onEditClick(product)}
+                      className="p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition"
+                      title="Edit course metrics"
+                    >
+                      <Edit2 size={14} />
+                    </button>
+                    
+                
+                    <button
+                      type="button"
+                      onClick={() => handleConfirmDelete(product)}
+                      className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-xl transition cursor-pointer"
+                      title="Delete course completely"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
                 </td>
 
               </tr>

@@ -16,7 +16,6 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 
-// 🌟 ADDED 'contextMode' prop ("product" or "tuition") to know which table to query
 function LiveChatModal({ productId, sellerId, buyerId, authenticatedUserId, onClose, viewAsMode = "auto", contextMode = "product" }) {
 
   const currentUserId = authenticatedUserId || buyerId || sellerId; 
@@ -41,170 +40,165 @@ function LiveChatModal({ productId, sellerId, buyerId, authenticatedUserId, onCl
     }
   }, [currentUserId, viewAsMode, productId, contextMode]);
 
-const fetchChatRooms = async (userId) => {
-  try {
-    setLoadingRooms(true);
+  const fetchChatRooms = async (userId) => {
+    try {
+      setLoadingRooms(true);
 
-    let query = supabase
-      .from("chat_rooms")
-      .select(`
-        id,
-        product_id,
-        seller_id,
-        buyer_id,
-        created_at
-      `);
+      let query = supabase
+        .from("chat_rooms")
+        .select(`
+          id,
+          product_id,
+          seller_id,
+          buyer_id,
+          created_at
+        `);
 
-    if (viewAsMode === "buyer") {
-      query = query.eq("buyer_id", userId);
-    } else if (viewAsMode === "seller") {
-      query = query.eq("seller_id", userId);
-    } else {
-      query = query.or(`buyer_id.eq.${userId},seller_id.eq.${userId}`);
-    }
+      if (viewAsMode === "buyer") {
+        query = query.eq("buyer_id", userId);
+      } else if (viewAsMode === "seller") {
+        query = query.eq("seller_id", userId);
+      } else {
+        query = query.or(`buyer_id.eq.${userId},seller_id.eq.${userId}`);
+      }
 
-    const { data: roomsData, error: roomsError } = await query.order("created_at", { ascending: false });
-    if (roomsError) throw roomsError;
+      const { data: roomsData, error: roomsError } = await query.order("created_at", { ascending: false });
+      if (roomsError) throw roomsError;
 
-    const enhancedRooms = await Promise.all(
-      (roomsData || []).map(async (room) => {
-        const isUserSeller = room.seller_id === userId;
-        const targetProfileId = isUserSeller ? room.buyer_id : room.seller_id;
-        let itemContext = null;
+      const enhancedRooms = await Promise.all(
+        (roomsData || []).map(async (room) => {
+          const isUserSeller = room.seller_id === userId;
+          const targetProfileId = isUserSeller ? room.buyer_id : room.seller_id;
+          let itemContext = null;
 
-       
-        if (room.product_id) {
-          // 1. Try fetching from tuition_requirements first
-         const { data: tuitionData } = await supabase
-  .from("tuition_requirements")
-  .select("subject, budget_per_month")
-  .eq("id", room.product_id)
-  .maybeSingle();
-
-if (tuitionData) {
-  itemContext = {
-    title: tuitionData.subject,
-    budget: tuitionData.budget_per_month,
-    isTuition: true
-  };
-}else {
-            // 2. Fallback to checking the products table
-            const { data: productData } = await supabase
-              .from("products")
-              .select("title, price, image_url")
+          if (room.product_id) {
+            const { data: tuitionData } = await supabase
+              .from("tuition_requirements")
+              .select("subject, budget_per_month")
               .eq("id", room.product_id)
               .maybeSingle();
 
-            if (productData) {
+            if (tuitionData) {
               itemContext = {
-                title: productData.title,
-                budget: productData.price,
-                image_url: productData.image_url,
-                isTuition: false
+                title: tuitionData.subject,
+                budget: tuitionData.budget_per_month,
+                isTuition: true
               };
+            } else {
+              const { data: productData } = await supabase
+                .from("products")
+                .select("title, price, image_url")
+                .eq("id", room.product_id)
+                .maybeSingle();
+
+              if (productData) {
+                itemContext = {
+                  title: productData.title,
+                  budget: productData.price,
+                  image_url: productData.image_url,
+                  isTuition: false
+                };
+              }
             }
           }
+
+          let profileDetails = { full_name: "User Context", username: "user" };
+          try {
+            const { data: profileData } = await supabase
+              .from("profiles")
+              .select("full_name, username, avatar_url, phone_number, email, location_name")
+              .eq("id", targetProfileId)
+              .single();
+            if (profileData) profileDetails = profileData;
+          } catch (e) {
+            console.warn("Profile fetching fallback activated.");
+          }
+
+          return {
+            ...room,
+            isUserSeller,
+            derivedContext: itemContext, 
+            counterparty_profile: profileDetails
+          };
+        })
+      );
+
+      setRooms(enhancedRooms);
+
+      if (productId) {
+        const matchingRoom = enhancedRooms.find(r => r.product_id === productId);
+        if (matchingRoom) {
+          setActiveRoom(matchingRoom);
+        } else if (sellerId && buyerId && buyerId !== sellerId) {
+          createAdHocChatRoomContext();
+        } else if (enhancedRooms.length > 0) {
+          setActiveRoom(enhancedRooms[0]);
         }
-
-        
-        let profileDetails = { full_name: "User Context", username: "user" };
-        try {
-          const { data: profileData } = await supabase
-            .from("profiles")
-            .select("full_name, username, avatar_url, phone_number, email, location_name")
-            .eq("id", targetProfileId)
-            .single();
-          if (profileData) profileDetails = profileData;
-        } catch (e) {
-          console.warn("Profile fetching fallback activated.");
-        }
-
-        return {
-          ...room,
-          isUserSeller,
-          derivedContext: itemContext, 
-          counterparty_profile: profileDetails
-        };
-      })
-    );
-
-    setRooms(enhancedRooms);
-
-    if (productId) {
-      const matchingRoom = enhancedRooms.find(r => r.product_id === productId);
-      if (matchingRoom) {
-        setActiveRoom(matchingRoom);
-      } else if (sellerId && buyerId && buyerId !== sellerId) {
-        createAdHocChatRoomContext();
-      } else if (enhancedRooms.length > 0) {
+      } else if (enhancedRooms.length > 0 && !activeRoom) {
         setActiveRoom(enhancedRooms[0]);
       }
-    } else if (enhancedRooms.length > 0 && !activeRoom) {
-      setActiveRoom(enhancedRooms[0]);
+
+    } catch (err) {
+      console.error("Room population error:", err);
+      toast.error("Failed to map user channels.");
+    } finally {
+      setLoadingRooms(false);
     }
+  };
 
-  } catch (err) {
-    console.error("Room population error:", err);
-    toast.error("Failed to map user channels.");
-  } finally {
-    setLoadingRooms(false);
-  }
-};
+  const createAdHocChatRoomContext = async () => {
+    if (!productId) return;
 
-const createAdHocChatRoomContext = async () => {
- 
-  if (!productId) return;
+    try {
+      let contextData = null;
 
-  try {
-    let contextData = null;
-
-  if (contextMode === "tuition") {
-  const { data } = await supabase
-    .from("tuition_requirements")
-    .select("subject, budget_per_month") 
-    .eq("id", productId)
-    .maybeSingle();
-  
-  if (data) {
-    contextData = { 
-      title: data.subject,
-      price: data.budget_per_month, 
-      isTuition: true 
-    };
-  }
-}else {
-      const { data } = await supabase
-        .from("products")
-        .select("title, price, image_url")
-        .eq("id", productId)
-        .maybeSingle();
-      
-      if (data) {
-        contextData = { ...data, isTuition: false };
+      if (contextMode === "tuition") {
+        const { data } = await supabase
+          .from("tuition_requirements")
+          .select("subject, budget_per_month") 
+          .eq("id", productId)
+          .maybeSingle();
+        
+        if (data) {
+          contextData = { 
+            title: data.subject,
+            price: data.budget_per_month, 
+            isTuition: true 
+          };
+        }
+      } else {
+        const { data } = await supabase
+          .from("products")
+          .select("title, price, image_url")
+          .eq("id", productId)
+          .maybeSingle();
+        
+        if (data) {
+          contextData = { ...data, isTuition: false };
+        }
       }
+
+      const { data: counterProfile } = await supabase
+        .from("profiles")
+        .select("full_name, username, avatar_url, phone_number, email, location_name")
+        .eq("id", sellerId)
+        .single();
+
+      const adHocStub = {
+        id: "NEW_ROOM_STUB", 
+        product_id: productId,
+        seller_id: sellerId,
+        buyer_id: currentUserId,
+        isUserSeller: false,
+        derivedContext: contextData,
+        counterparty_profile: counterProfile || { full_name: "User Context", username: "user" }
+      };
+
+      setActiveRoom(adHocStub);
+    } catch (err) {
+      console.error("Could not mount ad-hoc stream context:", err);
     }
-
-    const { data: counterProfile } = await supabase
-      .from("profiles")
-      .select("full_name, username, avatar_url, phone_number, email, location_name")
-      .eq("id", sellerId)
-      .single();
-
-    const adHocStub = {
-      id: "NEW_ROOM_STUB", 
-      product_id: productId,
-      seller_id: sellerId,
-      buyer_id: currentUserId,
-      isUserSeller: false,
-      derivedContext: contextData,
-      counterparty_profile: counterProfile || { full_name: "User Context", username: "user" }
-    };
-
-    setActiveRoom(adHocStub);
-  } catch (err) {
-    console.error("Could not mount ad-hoc stream context:", err);
-  }
-};
+  };
 
   useEffect(() => {
     if (!activeRoom || activeRoom.id === "NEW_ROOM_STUB") {
@@ -260,7 +254,11 @@ const createAdHocChatRoomContext = async () => {
 
   const clearAttachedFile = () => {
     setAttachedFile(null);
+    if (imagePreview) {
+      URL.revokeObjectURL(imagePreview); // Clean memory up efficiently
+    }
     setImagePreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const handleSendMessage = async (e) => {
@@ -273,7 +271,6 @@ const createAdHocChatRoomContext = async () => {
       let uploadedImageUrl = null;
 
       if (targetRoomId === "NEW_ROOM_STUB") {
-        // Create actual database connection chat room context safely
         const { data: newRoom, error: roomError } = await supabase
           .from("chat_rooms")
           .insert([{
@@ -352,7 +349,6 @@ const createAdHocChatRoomContext = async () => {
                 <div className="h-40 flex justify-center items-center"><Loader2 className="w-6 h-6 text-blue-600 animate-spin" /></div>
               ) : (
                 <div className="space-y-1">
-                  {/* Ad-hoc item */}
                   {activeRoom && activeRoom.id === "NEW_ROOM_STUB" && (
                     <div className="p-3 rounded-2xl bg-blue-600 text-white shadow-xs flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center font-bold text-xs shrink-0">?</div>
@@ -366,7 +362,6 @@ const createAdHocChatRoomContext = async () => {
                     </div>
                   )}
 
-                  {/* Room Lists */}
                   {rooms.map((room) => {
                     const isSelected = activeRoom?.id === room.id;
                     const contextTitle = room.tuition_requirements?.target_subject || room.products?.title || "Class Setup Context";
@@ -402,7 +397,7 @@ const createAdHocChatRoomContext = async () => {
             </div>
           </div>
 
-        
+          {/* CHAT INTERFACE */}
           <div className={`flex-1 flex flex-col bg-white ${!activeRoom ? "hidden md:flex items-center justify-center text-gray-400 p-8" : "flex"}`}>
             {activeRoom ? (
               <>
@@ -424,7 +419,6 @@ const createAdHocChatRoomContext = async () => {
                     </div>
                   </div>
 
-                  {/* Profile info cards */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2 border-t text-[11px] font-bold text-gray-600">
                     <div className="bg-slate-50 p-1.5 rounded-lg border truncate"><Phone size={12} className="inline mr-1 text-gray-400" />{activeRoom.counterparty_profile?.phone_number || "N/A"}</div>
                     <div className="bg-slate-50 p-1.5 rounded-lg border truncate"><Mail size={12} className="inline mr-1 text-gray-400" />{activeRoom.counterparty_profile?.email || "N/A"}</div>
@@ -450,23 +444,47 @@ const createAdHocChatRoomContext = async () => {
                   <div ref={scrollRef} />
                 </div>
 
-                {/* INPUT */}
-                <form onSubmit={handleSendMessage} className="p-3 border-t flex items-center gap-2 bg-white">
-                  <button type="button" onClick={() => fileInputRef.current?.click()} className="p-2 text-gray-500 hover:bg-gray-100 rounded-xl">
-                    <Paperclip size={20} />
-                  </button>
-                  <input type="file" ref={fileInputRef} accept="image/*" onChange={handleFileChange} className="hidden" />
-                  <input
-                    type="text"
-                    value={typedMessage}
-                    onChange={(e) => setTypedMessage(e.target.value)}
-                    placeholder="Type a message..."
-                    className="flex-1 bg-gray-100 border text-sm rounded-xl px-4 py-2.5 outline-none"
-                  />
-                  <button type="submit" disabled={sending || (!typedMessage.trim() && !attachedFile)} className="p-2.5 bg-blue-600 text-white rounded-xl">
-                    {sending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send size={18} />}
-                  </button>
-                </form>
+                {/* INPUT FORM BLOCK */}
+                <div className="border-t bg-white flex flex-col">
+                  
+                  {/* 🌟 KEY FIX: IMAGE PREVIEW BAR */}
+                  {imagePreview && (
+                    <div className="p-3 bg-slate-50 border-b flex items-center justify-between dynamic-preview">
+                      <div className="relative group rounded-xl overflow-hidden border border-gray-200 shadow-xs bg-white p-1">
+                        <img 
+                          src={imagePreview} 
+                          alt="Preview to send" 
+                          className="h-20 w-20 object-cover rounded-lg"
+                        />
+                      </div>
+                      <button 
+                        type="button" 
+                        onClick={clearAttachedFile}
+                        className="p-2 bg-red-50 text-red-600 hover:bg-red-100 rounded-xl transition flex items-center gap-1.5 text-xs font-bold"
+                      >
+                        <X size={16} />
+                        Remove Image
+                      </button>
+                    </div>
+                  )}
+
+                  <form onSubmit={handleSendMessage} className="p-3 flex items-center gap-2">
+                    <button type="button" onClick={() => fileInputRef.current?.click()} className="p-2 text-gray-500 hover:bg-gray-100 rounded-xl">
+                      <Paperclip size={20} />
+                    </button>
+                    <input type="file" ref={fileInputRef} accept="image/*" onChange={handleFileChange} className="hidden" />
+                    <input
+                      type="text"
+                      value={typedMessage}
+                      onChange={(e) => setTypedMessage(e.target.value)}
+                      placeholder="Type a message..."
+                      className="flex-1 bg-gray-100 border text-sm rounded-xl px-4 py-2.5 outline-none"
+                    />
+                    <button type="submit" disabled={sending || (!typedMessage.trim() && !attachedFile)} className="p-2.5 bg-blue-600 text-white rounded-xl">
+                      {sending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send size={18} />}
+                    </button>
+                  </form>
+                </div>
               </>
             ) : (
               <div className="text-center text-gray-400">
