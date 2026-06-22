@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   GraduationCap, 
   MapPin, 
@@ -11,8 +11,11 @@ import {
   Layers, 
   CheckCircle2,
   ArrowRight,
-  HeartHandshake
+  HeartHandshake,
+  X
 } from 'lucide-react';
+
+
 import toast, { Toaster } from 'react-hot-toast';
 
 import ceo from '../assets/images/founder.jpg';
@@ -21,10 +24,28 @@ import productManager from '../assets/images/productManager.jpeg';
 import HomeLayout from '../Layouts/HomeLayout';
 import SocialMedia from '../components/SocialMedia';
 
+
 function AboutUsPage() {
+
+  
+  const [posts, setPosts] = useState([]);
+  
+
+
 useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+
+
+   
+
+
+ 
+
+  const handlePostCreated = (newPost) => {
+    setPosts((prevPosts) => [newPost, ...prevPosts]);
+  };
+
   const team = [
     {
       name: "Bishal Saud",
@@ -151,6 +172,7 @@ useEffect(() => {
               </p>
             </div>
 
+
            
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4">
               {pillars.map((item, idx) => (
@@ -176,7 +198,7 @@ useEffect(() => {
           </div>
         </section>
 
-       
+     
         <section className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
           {features.map((feat, index) => (
             <div key={index} className="bg-white border border-slate-200/60 p-6 rounded-2xl shadow-2xs hover:shadow-md transition duration-300 space-y-3">

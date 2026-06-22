@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../api/supabase.js';
-import { CheckCircle2, Phone, Sparkles, GraduationCap, Calendar, ArrowRight, TrendingUp, DollarSign } from 'lucide-react';
+import { CheckCircle2, Phone, Sparkles, GraduationCap, Calendar, ArrowRight, TrendingUp, DollarSign,X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import HomeLayout from '../Layouts/HomeLayout.jsx';
+import Carousel from '../components/Carousel.jsx';
 
 
 function SafeAvatar({ src, name, fallbackClassName }) {
   const [imgError, setImgError] = useState(false);
 
-  
   if (!src || imgError) {
     return (
       <div className={`${fallbackClassName} w-12 h-12 rounded-full border-2 border-white flex items-center justify-center mx-auto font-bold text-xs select-none`}>
@@ -31,7 +31,25 @@ function SuccessfulResultsPage() {
   const [deals, setDeals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ totalDeals: 0, totalVolume: 0 });
-
+const [isComparisonVisible, setIsComparisonVisible] = useState(true);
+   useEffect(() => {
+      const hideUntil = localStorage.getItem("hideComparisonUntil");
+      if (hideUntil) {
+        const now = new Date().getTime();
+        if (now < parseInt(hideUntil, 10)) {
+          setIsComparisonVisible(false);
+        } else {
+          localStorage.removeItem("hideComparisonUntil"); 
+        }
+      }
+    }, []);
+  
+    // Dismiss the card and block display for 60 minutes 
+    const handleDismissComparison = () => {
+      const oneHourFromNow = new Date().getTime() + 60 * 60 * 1000;
+      localStorage.setItem("hideComparisonUntil", oneHourFromNow.toString());
+      setIsComparisonVisible(false);
+    };
   useEffect(() => {
     const fetchSuccessfulDeals = async () => {
       try {
@@ -138,6 +156,7 @@ function SuccessfulResultsPage() {
 
   return (
     <HomeLayout>
+      
       <div className="min-h-screen bg-slate-50/50 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto space-y-12">
           
@@ -153,6 +172,7 @@ function SuccessfulResultsPage() {
               Every card below represents a successful deal finalized between a parent and an educator for home tuition.
             </p>
           </div>
+         
 
           {/* Metrics Dashboard */}
           {deals.length > 0 && (
@@ -175,6 +195,22 @@ function SuccessfulResultsPage() {
                   <h4 className="text-xl font-black text-slate-900">Rs. {stats.totalVolume.toLocaleString()}</h4>
                 </div>
               </div>
+            </div>
+          )}
+
+             {isComparisonVisible && (
+            <div className="relative bg-white rounded-3xl border border-neutral-200/60 p-4 md:p-6 shadow-xl max-w-5xl mx-auto transition-all duration-300">
+  
+              <button 
+                onClick={handleDismissComparison}
+                className="absolute top-4 right-4 z-50 p-1.5 rounded-full bg-neutral-100 hover:bg-neutral-200 text-neutral-500 hover:text-neutral-800 transition-colors shadow-sm cursor-pointer"
+                title="Hide layout comparison for 1 hour"
+              >
+                <X className="w-5 h-5" />
+              </button>
+              
+           
+              <Carousel />
             </div>
           )}
 

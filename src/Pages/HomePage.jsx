@@ -1,6 +1,5 @@
-import React, { useState } from "react";
-import { Helmet } from "react-helmet-async"; 
-import { Link } from "react-router-dom"; // Make sure Link is imported
+import React, { useState } from "react"; 
+import { Link } from "react-router-dom"; 
 import HomeLayout from "../Layouts/HomeLayout";
 import { AlertCircle, Terminal, CheckCircle2, ShieldCheck, Users, PlusCircle, Sparkles } from "lucide-react";
 import SocialMedia from "../components/SocialMedia.jsx";
@@ -13,7 +12,7 @@ import BecomeATeacherAds from "../Ads/BecomeATeacherAds.jsx";
 import HomeTutorModel from "../model/HomeTutorModel.jsx";
 import ImportantQuestions from "../components/ImportantQuestions.jsx";
 import UserPosts from "../components/UserPosts.jsx";
-
+import { Helmet } from "react-helmet-async";
 function HomePage() {
   const { user, loading } = useAuth();
   const [isFlowOpen, setIsFlowOpen] = useState(false);
@@ -33,7 +32,33 @@ function HomePage() {
 
   return (
     <HomeLayout>
-   
+        <Helmet>
+  <title>
+    Find Home Tuition Teachers Near You in Nepal | Home Tutors | TolPath
+  </title>
+
+  <meta
+    name="description"
+    content="Find trusted home tuition teachers near you in Nepal. Browse qualified tutors for Math, Science, English, Computer, and more. Connect with verified home tutors on TolPath."
+  />
+
+  <meta
+    name="keywords"
+    content="home tuition near me, home tutor near me, tuition teacher near me, private tutor Nepal, home tuition Nepal, math tutor, science tutor, English tutor, tuition jobs Nepal, TolPath"
+  />
+
+  <meta property="og:title" content="Find Home Tuition Teachers Near You in Nepal | TolPath" />
+  
+  <meta
+    property="og:description"
+    content="Discover qualified home tutors near you. Find teachers for school subjects, exam preparation, and personalized learning across Nepal."
+  />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="TolPath" />
+
+  <link rel="canonical" href="https://www.tolpath.com/" />
+</Helmet>
 
       {user && <BecomeATeacherAds is_verified_seller={user.is_verified_seller} />}
       
