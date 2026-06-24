@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { 
   GraduationCap, 
   MapPin, 
@@ -8,43 +8,24 @@ import {
   Sparkles, 
   PhoneCall, 
   Mail, 
-  Layers, 
   CheckCircle2,
-  ArrowRight,
-  HeartHandshake,
-  X
+  HeartHandshake
 } from 'lucide-react';
-
 
 import toast, { Toaster } from 'react-hot-toast';
 
 import ceo from '../assets/images/founder.jpg';
 import manager from '../assets/images/manager.jpeg';
 import productManager from '../assets/images/productManager.jpeg';
+import socialMediaHandler from '../assets/images/social.jpeg'; 
 import HomeLayout from '../Layouts/HomeLayout';
 import SocialMedia from '../components/SocialMedia';
 
-
 function AboutUsPage() {
 
-  
-  const [posts, setPosts] = useState([]);
-  
-
-
-useEffect(() => {
+  useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
-
-
-   
-
-
- 
-
-  const handlePostCreated = (newPost) => {
-    setPosts((prevPosts) => [newPost, ...prevPosts]);
-  };
 
   const team = [
     {
@@ -73,6 +54,15 @@ useEffect(() => {
       image: productManager, 
       phone: "+977 986-8813739",
       email: "bikashdhami7350@gmail.com"
+    },
+    {
+      name: "Purnima Pant", 
+      role: "Content Creator & Social Media Strategist",
+      location: "Kanchanpur, Nepal",
+      bio: "Creative storyteller driving community engagement and digital branding. Manages social campaigns, educational reels, and student-tutor outreach across TikTok, Instagram, and YouTube.",
+      image: socialMediaHandler, 
+      phone: "+977 986-5605199",
+      email: "purnimapant715@gmail.com" 
     }
   ];
 
@@ -140,7 +130,6 @@ useEffect(() => {
           </p>
         </section>
 
-       
         <section className="max-w-4xl mx-auto bg-white border border-slate-200/80 rounded-3xl p-6 md:p-10 shadow-xs relative overflow-hidden">
           <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none hidden sm:block">
             <HeartHandshake size={140} className="text-blue-600" />
@@ -172,8 +161,6 @@ useEffect(() => {
               </p>
             </div>
 
-
-           
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4">
               {pillars.map((item, idx) => (
                 <div key={idx} className="flex items-start gap-2.5">
@@ -198,7 +185,6 @@ useEffect(() => {
           </div>
         </section>
 
-     
         <section className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
           {features.map((feat, index) => (
             <div key={index} className="bg-white border border-slate-200/60 p-6 rounded-2xl shadow-2xs hover:shadow-md transition duration-300 space-y-3">
@@ -229,8 +215,8 @@ useEffect(() => {
           </div>
         </section>
 
-        {/*  LEADERSHIP TEAM SECTION */}
-        <section className="max-w-4xl mx-auto space-y-8">
+        {/* LEADERSHIP TEAM SECTION */}
+        <section className="max-w-5xl mx-auto space-y-8">
           <div className="text-center">
             <h2 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight flex items-center justify-center gap-2">
               <Users className="text-blue-600" size={24} /> Meet Our Leadership
@@ -262,7 +248,7 @@ useEffect(() => {
                         </h3>
                         <CheckCircle2 size={14} className="text-blue-500 fill-blue-500/10 shrink-0" strokeWidth={3} />
                       </div>
-                      <p className="text-xs font-extrabold text-blue-600">{member.role}</p>
+                      <p className="text-xs font-extrabold text-blue-600 leading-tight">{member.role}</p>
                       <span className="text-[10px] text-slate-400 font-bold flex items-center gap-0.5 mt-0.5">
                         <MapPin size={11} className="text-slate-400" /> {member.location}
                       </span>
@@ -295,7 +281,6 @@ useEffect(() => {
 
         <SocialMedia />
 
-  
         <div className="max-w-md mx-auto text-center border-t border-slate-200/60 pt-8">
           <p className="text-xs text-slate-400 font-bold flex items-center justify-center gap-1.5">
             <GraduationCap size={14} /> Building the future of learning, one neighborhood at a time.
@@ -305,7 +290,6 @@ useEffect(() => {
     </HomeLayout>
   );
 }
-
 
 function RocketIcon(props) {
   return (
