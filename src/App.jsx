@@ -17,6 +17,7 @@ import EditProfilePage from './Pages/EditProfilePage.jsx'
 import NotFound from './context/NotFound.jsx'
 import ProtectedAdmin from './Admin/ProtectedAdmin.jsx'
 import SuccessfulResultsPage from './Pages/SuccessfulResultsPage.jsx'
+import HomeTuitionJobs from './JobPages/HomeTuitionJobs.jsx'
 
 
 function App() {
@@ -38,6 +39,7 @@ function App() {
         <Route path='/book-tutor/:courseId' element={<ContactSellerPage />} />
       <Route path='/admin' element={<ProtectedAdmin />} />
       <Route path='/success-reports' element={<SuccessfulResultsPage />} />
+     <Route path="/hometuitionjobs/:locationName?" element={<HomeTuitionJobs />} />
       
 
         {/* Protected Merchant Console Routes */}
