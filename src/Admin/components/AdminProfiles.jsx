@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Mail, MapPin, DollarSign, Edit2 } from "lucide-react";
+import { Mail, MapPin, DollarSign, Edit2, ShieldAlert } from "lucide-react";
 
 export default function AdminProfiles({ 
   profiles, 
@@ -79,7 +79,23 @@ export default function AdminProfiles({
                     <DollarSign size={13} className="text-slate-400" />
                     {user.total_earnings?.toLocaleString() || 0}
                   </div>
-                  <div>Exp: {user.experience_years || 0} Yrs</div>
+
+                  {/* Dynamic Validation Block: Only displays editable component layout for verified sellers */}
+                  <div className="mt-1 mb-1 font-sans">
+                    {user.is_verified_seller ? (
+                      <div className="flex items-center gap-1">
+                        <span className="text-slate-500 text-xs font-medium">Exp:</span>
+                        <span className="bg-purple-50 text-purple-700 border border-purple-200 px-1.5 py-0.5 rounded text-[11px] font-bold">
+                          {user.experience_years || 0} Yrs
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="text-slate-400 text-[10px] italic flex items-center gap-0.5">
+                        <ShieldAlert size={11} className="text-slate-300" /> Exp Closed (Not a Seller)
+                      </div>
+                    )}
+                  </div>
+
                   <div className="text-slate-400 text-[10px]">Rating: {user.rating || 0}★ ({user.review_count || 0})</div>
                 </td>
 
@@ -94,6 +110,7 @@ export default function AdminProfiles({
                   <button
                     onClick={() => onEditClick(user)}
                     className="p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition"
+                    title={user.is_verified_seller ? "Edit metrics including Experience Years" : "Edit profile metadata"}
                   >
                     <Edit2 size={15} />
                   </button>

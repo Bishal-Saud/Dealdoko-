@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "../api/supabase.js";
 import toast, { Toaster } from "react-hot-toast";
-import { User, Mail, Smartphone, Upload, Loader2 } from "lucide-react";
+import { User, Mail, Smartphone, Upload, Loader2, FileText } from "lucide-react";
 import HomeLayout from "../Layouts/HomeLayout.jsx";
 
 function EditProfilePage() {
@@ -15,6 +15,7 @@ function EditProfilePage() {
   const [username, setUsername] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
+  const [bio, setBio] = useState(""); // Added bio state field
   
   // File Upload States
   const [avatarFile, setAvatarFile] = useState(null);
@@ -35,10 +36,10 @@ function EditProfilePage() {
           setUserId(user.id);
           setEmail(user.email || "");
 
-          // Fetch matching row from your profiles table
+          // Fetch matching row from your profiles table, explicitly retrieving bio
           const { data: profile, error: profileError } = await supabase
             .from("profiles")
-            .select("full_name, username, phone_number, avatar_url")
+            .select("full_name, username, phone_number, avatar_url, bio")
             .eq("id", user.id)
             .single();
 
@@ -50,6 +51,7 @@ function EditProfilePage() {
           if (profile) {
             setFullName(profile.full_name || "");
             setUsername(profile.username || "");
+            setBio(profile.bio || ""); // Loaded bio value from column
             
             // Sanitize initial values coming from database just in case old formats exist
             const sanitizedPhone = (profile.phone_number || "").replace(/\D/g, "");
@@ -135,13 +137,14 @@ function EditProfilePage() {
         }
       }
 
-      // Upsert profile data object mapping (phoneNumber is already pure digits)
+      // Upsert profile data object mapping
       const updates = {
         id: userId,
         full_name: fullName.trim(),
         username: cleanedUsername,
         phone_number: phoneNumber, 
         avatar_url: finalAvatarUrl,
+        bio: bio.trim(), // Synchronized data target directly into the column
       };
 
       const { error } = await supabase
@@ -188,7 +191,7 @@ function EditProfilePage() {
           {/* Settings Branding Bar */}
           <div className="p-6 md:p-8 bg-linear-to-r from-blue-50 to-indigo-50 border-b border-gray-100">
             <h1 className="text-2xl font-black text-gray-900 tracking-tight">Account Settings</h1>
-            <p className="text-sm text-gray-500 mt-1">Manage your public profile identity, contact values, and avatars.</p>
+            <p className="text-sm text-gray-500 mt-1">Manage your public profile identity, bio, contact values, and avatars.</p>
           </div>
 
           <form onSubmit={handleUpdateProfile} className="p-6 md:p-8 space-y-6">
@@ -285,7 +288,7 @@ function EditProfilePage() {
                 </div>
               </div>
 
-              {/* PHONE NUMBER VALUE BOX (RESTRICTED TO DIGITS ONLY) */}
+              {/* PHONE NUMBER VALUE BOX */}
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-gray-600 uppercase tracking-wider">Phone Number</label>
                 <div className="relative">
@@ -296,13 +299,32 @@ function EditProfilePage() {
                     type="tel"
                     placeholder="98XXXXXXXX"
                     value={phoneNumber}
-                    // Real-time sanitation blocks characters like +, space, and country codes
                     onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ""))}
                     className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition"
                   />
                 </div>
               </div>
 
+            </div>
+
+            {/* BIOGRAPHY INPUT TEXTAREA COLUMN */}
+            <div className="space-y-1.5">
+              <div className="flex justify-between items-center">
+                <label className="text-xs font-bold text-gray-600 uppercase tracking-wider flex items-center gap-1">
+                  <FileText size={14} className="text-gray-400" /> Biography / Summary
+                </label>
+                <span className={`text-[10px] font-mono ${bio.length > 250 ? "text-amber-600 font-bold" : "text-gray-400"}`}>
+                  {bio.length} / 300 chars
+                </span>
+              </div>
+              <textarea
+                maxLength={300}
+                rows={3}
+                placeholder="Tell us about yourself, your qualifications, skills, or experience..."
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition resize-none leading-relaxed text-gray-700"
+              />
             </div>
 
             {/* SUBMISSION FOOTER REGION */}
