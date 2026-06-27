@@ -26,7 +26,7 @@ function BecomeATeacherAds({ is_verified_seller = false }) {
   const [hasShown, setHasShown] = useState(false);
   const [timeLeft, setTimeLeft] = useState(300); 
   const constraintsRef = useRef(null);
-  const [language, setLanguage] = useState('ne'); 
+  const [language, setLanguage] = useState('en'); 
 
   useEffect(() => {
     // 💡 BLOCKER: Do not attach event listeners if user is already verified
