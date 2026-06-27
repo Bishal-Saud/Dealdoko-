@@ -266,7 +266,7 @@ function ManageCourse() {
           <p className="text-xs font-semibold text-gray-400 mt-0.5">Publish home tuition packages or update active fees below.</p>
         </div>
         <div className="flex flex-wrap gap-3">
-          {/* Completed Cycles Metric (Time Spent / Finished Courses) */}
+         
           <div className="bg-blue-50 px-4 py-2 rounded-2xl border border-blue-100 text-center">
             <span className="block text-[10px] font-black text-blue-800 uppercase tracking-wider">Completed Batches</span>
             <span className="text-sm font-black text-blue-700">{profileMetrics.total_completed_courses} Times</span>

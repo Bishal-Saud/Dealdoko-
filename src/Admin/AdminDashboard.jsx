@@ -6,10 +6,10 @@ import {
   Search, ShieldCheck, Users, BookOpen, FileText, MessageSquare 
 } from "lucide-react";
 
-// Workspace Views Imports
+
 import AdminProfiles from "./components/AdminProfiles.jsx";
 import Courses from "./components/Courses.jsx"; 
-import TuitionRequirements from "./components/TuitionRequirements.jsx"; // 👈 Fixed missing import
+import TuitionRequirements from "./components/TuitionRequirements.jsx"; 
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("profiles"); 

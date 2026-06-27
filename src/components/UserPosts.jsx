@@ -21,7 +21,6 @@ function UserPosts({ user, posts, setPosts }) {
   const [openMenuPostId, setOpenMenuPostId] = useState(null);
   const menuRef = useRef(null);
 
- 
   const [teacherDetailsModal, setTeacherDetailsModal] = useState({ isOpen: false, postId: null });
   const [teacherForm, setTeacherForm] = useState({ name: '', phone: '' });
   const [submittingTeacher, setSubmittingTeacher] = useState(false);
@@ -98,6 +97,8 @@ function UserPosts({ user, posts, setPosts }) {
           const daysDifference = (new Date() - referenceDate) / (1000 * 60 * 60 * 24);
           const isExpired = daysDifference >= 10;
 
+          // Hide posts marked as hidden/archived from client-view completely
+          if (post.status === 'hidden' || post.status === 'archived') return false;
           if (isOwnPost) return true;
           if (isExpired || post.status === 'teacher_found') return false;
 
@@ -191,7 +192,6 @@ function UserPosts({ user, posts, setPosts }) {
     try {
       setSubmittingTeacher(true);
       
-     
       const { error: insertError } = await supabase
         .from('hired_teachers')
         .insert([{
@@ -203,7 +203,6 @@ function UserPosts({ user, posts, setPosts }) {
 
       if (insertError) throw insertError;
 
-      
       const { error: updateError } = await supabase
         .from('tuition_requirements')
         .update({ status: 'teacher_found' })
@@ -244,24 +243,42 @@ function UserPosts({ user, posts, setPosts }) {
     }
   };
 
- const handleDeletePost = async (postId) => {
-  if (!window.confirm("Are you sure you want to delete this tuition requirement?")) return;
-  try {
-    // Soft delete by updating status configuration flag
-    const { error } = await supabase
-      .from('tuition_requirements')
-      .update({ status: 'deleted' }) 
-      .eq('id', postId);
+  const handleDeletePost = async (postId) => {
+    if (!window.confirm("Are you sure you want to delete this tuition requirement permanently?")) return;
+    try {
+      // Attempt hard physical table deletion
+      const { error } = await supabase
+        .from('tuition_requirements')
+        .delete() 
+        .eq('id', postId);
 
-    if (error) throw error;
-    toast.success("Post removed successfully.");
-    setPosts(prev => prev.filter(p => p.id !== postId));
-  } catch (err) {
-    toast.error("Failed to remove post.");
-  } finally {
-    setOpenMenuPostId(null);
-  }
-};
+      if (error) throw error;
+      
+      toast.success("Post removed permanently.");
+      setPosts(prev => prev.filter(p => p.id !== postId));
+    } catch (err) {
+      console.warn("Hard delete blocked due to relationships. Falling back to soft-hide strategy...", err);
+      
+      // Fallback Strategy: Safe soft delete by updating status flag instead
+      try {
+        const { error: fallbackError } = await supabase
+          .from('tuition_requirements')
+          .update({ status: 'hidden' })
+          .eq('id', postId);
+
+        if (fallbackError) throw fallbackError;
+
+        toast.success("Post removed from your board view.");
+        setPosts(prev => prev.filter(p => p.id !== postId));
+      } catch (fallbackErr) {
+        console.error("Complete removal failure:", fallbackErr);
+        toast.error("Failed to remove post containing linked hire records.");
+      }
+    } finally {
+      setOpenMenuPostId(null);
+    }
+  };
+
   const parseSubjectString = (rawSubject) => {
     if (!rawSubject) return { title: "General Tuition", subtitle: null };
     const match = rawSubject.match(/^(.*?)\s*((?:class|code)?\s*\d+)$/i);
@@ -284,6 +301,7 @@ function UserPosts({ user, posts, setPosts }) {
 
   return (
     <section className="space-y-6">
+      {/* Rest of UI template remains unchanged */}
       <div className="border-b border-slate-100 pb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h2 className="text-xl font-bold text-slate-900 tracking-tight">
@@ -475,7 +493,7 @@ function UserPosts({ user, posts, setPosts }) {
                     {isOwnPost ? (
                       isExpired ? (
                         <button onClick={() => handleRenewPost(post.id)} className="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-2.5 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 shadow-xs cursor-pointer">
-                          <RefreshCw className="w-3.5 h-3.5 animate-spin-slow" /> Repost / Renew Visibility
+                          <RefreshCw className="w-3.5 h-3.5" /> Repost / Renew Visibility
                         </button>
                       ) : (
                         <div className="flex flex-col gap-2">
@@ -513,7 +531,7 @@ function UserPosts({ user, posts, setPosts }) {
         </div>
       )}
 
-      {/* Teacher Found / Input Details Modal */}
+      {/* Teacher Found Modal */}
       {teacherDetailsModal.isOpen && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
           <div className="bg-white rounded-2xl max-w-sm w-full shadow-2xl border border-slate-100 overflow-hidden relative p-6 animate-in zoom-in-95 duration-200">

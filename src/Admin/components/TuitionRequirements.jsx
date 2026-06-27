@@ -9,17 +9,18 @@ export default function TuitionRequirements({ requirements, setRequirements, sea
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [updating, setUpdating] = useState(false);
 
- 
+  // Safe Filter execution string-casting values beforehand
   const filteredRequirements = requirements.filter((req) => {
-    const q = searchQuery.toLowerCase();
+    const q = searchQuery ? searchQuery.toLowerCase() : "";
+    if (!q) return true; // If search query is empty, pass through immediately
+    
     return (
       (req.subject && req.subject.toLowerCase().includes(q)) ||
       (req.class_level && req.class_level.toLowerCase().includes(q)) ||
       (req.location_name && req.location_name.toLowerCase().includes(q)) ||
-      (req.id && req.id.toLowerCase().includes(q))
+      (req.id && req.id.toString().toLowerCase().includes(q)) // Safe .toString() convert
     );
   });
-
 
   const handleUpdateRequirement = async (e) => {
     e.preventDefault();
@@ -44,10 +45,13 @@ export default function TuitionRequirements({ requirements, setRequirements, sea
 
       toast.success("Requirement matrix updated cleanly!");
       setIsEditModalOpen(false);
-
       
       setRequirements((prev) =>
-        prev.map((item) => (item.id === selectedReq.id ? { ...selectedReq, updated_at: new Date().toISOString() } : item))
+        prev.map((item) => 
+          item.id?.toString() === selectedReq.id?.toString() 
+            ? { ...selectedReq, updated_at: new Date().toISOString() } 
+            : item
+        )
       );
     } catch (err) {
       console.error("Error patching requirement data row:", err.message);
@@ -57,26 +61,39 @@ export default function TuitionRequirements({ requirements, setRequirements, sea
     }
   };
 
- 
   const handleConfirmDelete = async (req) => {
-    const confirmation = window.confirm(`Permanently scrub requirement query for "${req.subject}"? This action is irreversible.`);
-    if (!confirmation) return;
+  const confirmation = window.confirm(`Permanently scrub requirement query for "${req.subject}"? This action is irreversible.`);
+  if (!confirmation) return;
 
-    try {
-      const { error } = await supabase
-        .from("tuition_requirements")
-        .delete()
-        .eq("id", req.id);
+  try {
+    // Adding .select() forces Supabase to return the data it deleted
+    const { data, error } = await supabase
+      .from("tuition_requirements")
+      .delete()
+      .eq("id", req.id)
+      .select();
 
-      if (error) throw error;
+    if (error) throw error;
 
-      toast.success("Requirement registry entry successfully deleted.");
-      setRequirements((prev) => prev.filter((item) => item.id !== req.id));
-    } catch (err) {
-      console.error("Error executing row delete command:", err.message);
-      toast.error("Database deletion request failed.");
+    // Check if any row was actually deleted in the database
+    if (!data || data.length === 0) {
+      console.warn("⚠️ Database warning: No rows were matched or deleted. Check your RLS policies!");
+      toast.error("Failed to delete from server (RLS or ID issue).");
+      return;
     }
-  };
+
+    console.log("Successfully deleted row from database:", data);
+    toast.success("Requirement registry entry successfully deleted.");
+    
+    setRequirements((prev) => 
+      prev.filter((item) => item.id?.toString() !== req.id?.toString())
+    );
+
+  } catch (err) {
+    console.error("Error executing row delete command:", err.message);
+    toast.error("Database deletion request failed.");
+  }
+};
 
   if (filteredRequirements.length === 0) {
     return (
@@ -102,7 +119,7 @@ export default function TuitionRequirements({ requirements, setRequirements, sea
           </thead>
           <tbody className="divide-y divide-slate-100 text-xs font-medium text-slate-700">
             {filteredRequirements.map((req) => (
-              <tr key={req.id} className="hover:bg-slate-50/60 transition">
+              <tr key={req.id?.toString()} className="hover:bg-slate-50/60 transition">
                 {/* Subject and IDs */}
                 <td className="p-4 max-w-[220px]">
                   <div className="truncate">

@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase } from '../api/supabase.js'; 
 
-// 1. Create the context with a default value of undefined
+
 const AuthContext = createContext(undefined);
 
 export const AuthProvider = ({ children }) => {
@@ -58,7 +58,7 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-// 2. Clear, diagnostic custom hook
+
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {

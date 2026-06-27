@@ -463,6 +463,7 @@ const handleApplyNow = async (postedByUserId) => {
         </section>
 
   
+  
 
         {/* MODERN LOGIN MODAL */}
         {showAuthModal && (
