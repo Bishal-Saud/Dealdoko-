@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "../api/supabase.js";
 import { 
-  ClipboardList, DollarSign, Calendar, Loader2, 
-  AlertCircle, RefreshCw, Users, Percent, CheckCircle2
+  ClipboardList,  Calendar, Loader2, 
+  AlertCircle, RefreshCw, Users, Percent, CheckCircle2,
+  IndianRupeeIcon
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -96,7 +97,7 @@ function ManageOrderPage() {
         
         {/* Metric 1: Total Revenue from Completed Earnings */}
         <div className="bg-white p-5 rounded-2xl border border-gray-100 flex items-center gap-4 shadow-xs">
-          <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl"><DollarSign size={20} /></div>
+          <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl"><IndianRupeeIcon size={20} /></div>
           <div>
             <span className="block text-[10px] font-black text-gray-400 uppercase tracking-wider">Total Revenue (Completed)</span>
             <span className="text-lg font-black text-emerald-600">रू {metrics.total_revenue.toLocaleString()}</span>
