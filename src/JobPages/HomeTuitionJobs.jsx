@@ -11,9 +11,30 @@ function HomeTuitionJobs() {
   const navigate = useNavigate();
   const { user } = useAuth(); 
 
-  // Location Fallback Strategy: Router Param > User Profile > Default (Kathmandu)
-  const initialSearchLocation = locationName || (user?.location_name) || 'Kathmandu';
-  const formattedLocation = initialSearchLocation.charAt(0).toUpperCase() + initialSearchLocation.slice(1);
+  // Helper handling logic to clean up addresses and extract district/city names
+  const getCleanedLocation = (fullAddress) => {
+    if (!fullAddress) return ''; // Default to empty string if nothing provided
+
+    const segments = fullAddress.split(',').map(s => s.trim());
+    const districtSegment = segments.find(s => s.toLowerCase().includes('district'));
+    
+    if (districtSegment) {
+      return districtSegment.replace(/\bdistrict\b/gi, '').trim(); 
+    }
+    if (segments.length >= 3) {
+      return segments[2]; 
+    }
+    return segments[0]; 
+  };
+
+  // Location Fallback Strategy: Extracts cleaned district name or defaults to empty string ''
+  const rawLocation = locationName || user?.location_name || '';
+  const initialSearchLocation = getCleanedLocation(rawLocation);
+  
+  // Format the location for headers; if empty, use 'Nepal' or 'All' as a backup context string
+  const formattedLocation = initialSearchLocation 
+    ? initialSearchLocation.charAt(0).toUpperCase() + initialSearchLocation.slice(1) 
+    : 'Kathmandu'; // Fallback for UI visualization blocks if empty
   
   // Dynamic Application State
   const [jobs, setJobs] = useState([]);
@@ -27,15 +48,13 @@ function HomeTuitionJobs() {
   const [searchClass, setSearchClass] = useState('Select Class');
   const [searchSalary, setSearchSalary] = useState('Any Salary');
 
- 
-  
   useEffect(() => {
     if (locationName) {
-      setSearchLocation(locationName);
+      setSearchLocation(getCleanedLocation(locationName));
     }
   }, [locationName]);
 
-useEffect(() => {
+  useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [searchLocation, locationName]);
 
@@ -86,7 +105,7 @@ useEffect(() => {
     }
   }, [searchSubject, searchClass, searchSalary]);
 
-  // FIXED: Runs fetch when initial context fields OR search changes
+  // Runs fetch when initial context fields OR search changes
   useEffect(() => {
     fetchTuitionJobs(searchLocation);
   }, [searchLocation, initialSearchLocation, user?.location_name, fetchTuitionJobs]);
@@ -99,53 +118,50 @@ useEffect(() => {
 
   // Helper handling logic for local footer links or quick filtering buttons
   const handleAreaSelect = (area) => {
-    setSearchLocation(area);
-    navigate(`/hometuitionjobs/${encodeURIComponent(area.trim().toLowerCase())}`);
+    const cleanedArea = getCleanedLocation(area);
+    setSearchLocation(cleanedArea);
+    navigate(`/hometuitionjobs/${encodeURIComponent(cleanedArea.trim().toLowerCase())}`);
   };
 
   const toggleFaq = (index) => {
     setOpenFaq(openFaq === index ? null : index);
   };
 
-const handleApplyNow = async (postedByUserId) => {
-  if (!user) {
-    setShowAuthModal(true);
-    return;
-  }
-
-  if (!postedByUserId) {
-    console.error("No user ID associated with this tuition post.");
-    return;
-  }
-
-  try {
-    setLoading(true); 
-    
-    // FETCH THE CLICKING USER'S PROFILE (the logged-in user)
-    const { data: currentUserProfile, error } = await supabase
-      .from('profiles')
-      .select('is_verified_seller')
-      .eq('id', user.id) // Checking the current user's status, not the poster's
-      .single();
-
-    if (error) throw error;
-
-    // Direct access condition: Only allowed if the current user is a verified seller
-    if (currentUserProfile?.is_verified_seller === true) {
-      // Access granted! They can view the job poster's dynamic profile
-      navigate(`/profile/${postedByUserId}`); 
-    } else {
-      // Access denied! Show them the role/onboarding selection page instead
-      navigate('/role');
+  const handleApplyNow = async (postedByUserId) => {
+    if (!user) {
+      setShowAuthModal(true);
+      return;
     }
-  } catch (err) {
-    console.error("Error evaluating viewer validation flags:", err.message);
-    // Safe fallback path routing if the profile read fails
-    navigate('/role');
-  } finally {
-    setLoading(false);
-  }
-};
+
+    if (!postedByUserId) {
+      console.error("No user ID associated with this tuition post.");
+      return;
+    }
+
+    try {
+      setLoading(true); 
+      
+      // FETCH THE CLICKING USER'S PROFILE (the logged-in user)
+      const { data: currentUserProfile, error } = await supabase
+        .from('profiles')
+        .select('is_verified_seller')
+        .eq('id', user.id)
+        .single();
+
+      if (error) throw error;
+
+      if (currentUserProfile?.is_verified_seller === true) {
+        navigate(`/profile/${postedByUserId}`); 
+      } else {
+        navigate('/role');
+      }
+    } catch (err) {
+      console.error("Error evaluating viewer validation flags:", err.message);
+      navigate('/role');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleModalLogin = async () => {
     try {
@@ -177,29 +193,14 @@ const handleApplyNow = async (postedByUserId) => {
     }
   };
 
-  const getCleanedLocation = (fullAddress) => {
-    if (!fullAddress) return 'Kathmandu';
-
-    const segments = fullAddress.split(',').map(s => s.trim());
-    const districtSegment = segments.find(s => s.toLowerCase().includes('district'));
-    
-    if (districtSegment) {
-      return districtSegment.replace(/\bdistrict\b/gi, '').trim(); 
-    }
-    if (segments.length >= 3) {
-      return segments[2]; 
-    }
-    return segments[0]; 
-  };
-
-  const uiDisplayLocation = getCleanedLocation(searchLocation || formattedLocation);
+  const uiDisplayLocation = searchLocation || formattedLocation;
 
   return (
     <HomeLayout>
       <div className="bg-gray-50 text-gray-800 mb-10 relative">
         <Helmet>
           <title>{`Home Tuition Jobs in ${uiDisplayLocation} | TolPath`}</title>
-          <meta name="description" content={`Looking for home tuition jobs in ${formattedLocation}? Find high-paying tuition vacancies near you. Connect directly with parents.`} />
+          <meta name="description" content={`Looking for home tuition jobs in ${uiDisplayLocation}? Find high-paying tuition vacancies near you. Connect directly with parents.`} />
           <link rel="canonical" href={`https://tolpath.com/hometuitionjobs/${initialSearchLocation.toLowerCase()}`} />
           <script type="application/ld+json">{JSON.stringify(jsonLdSchema)}</script>
         </Helmet>
@@ -301,35 +302,33 @@ const handleApplyNow = async (postedByUserId) => {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-           {jobs.map((job) => (
-  <div key={job.id} className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition duration-200 flex flex-col justify-between">
-    <div>
-      <div className="flex justify-between items-start mb-4">
-        <h3 className="text-xl font-bold text-gray-900">{job.subject}</h3>
-        <span className="bg-blue-50 text-blue-700 text-xs font-semibold px-2.5 py-1 rounded-full">{job.class_level}</span>
-      </div>
-      <div className="space-y-2 text-sm text-gray-600 mb-6">
-        <p className="flex items-start">
-          <span>📍</span>
-          <span className="line-clamp-2" title={job.location_name}>
-            {job.landmark_description ? `${job.landmark_description}, ` : ''}{job.location_name}
-          </span>
-        </p>
-        <p className="flex items-center font-semibold text-green-600">
-          <span className="mr-2">💰</span>Rs. {job.budget_per_month.toLocaleString()}/month
-        </p>
-      </div>
-    </div>
-    
-   
-    <button 
-      onClick={() => handleApplyNow(job.user_id)} 
-      className="w-full bg-gray-900 hover:bg-gray-800 text-white text-sm font-medium py-2 rounded-lg transition duration-150 text-center"
-    >
-      Apply Now
-    </button>
-  </div>
-))}
+              {jobs.map((job) => (
+                <div key={job.id} className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition duration-200 flex flex-col justify-between">
+                  <div>
+                    <div className="flex justify-between items-start mb-4">
+                      <h3 className="text-xl font-bold text-gray-900">{job.subject}</h3>
+                      <span className="bg-blue-50 text-blue-700 text-xs font-semibold px-2.5 py-1 rounded-full">{job.class_level}</span>
+                    </div>
+                    <div className="space-y-2 text-sm text-gray-600 mb-6">
+                      <p className="flex items-start">
+                        <span>📍</span>
+                        <span className="line-clamp-2" title={job.location_name}>
+                          {job.landmark_description ? `${job.landmark_description}, ` : ''}{job.location_name}
+                        </span>
+                      </p>
+                      <p className="flex items-center font-semibold text-green-600">
+                        <span className="mr-2">💰</span>Rs. {job.budget_per_month.toLocaleString()}/month
+                      </p>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={() => handleApplyNow(job.user_id)} 
+                    className="w-full bg-gray-900 hover:bg-gray-800 text-white text-sm font-medium py-2 rounded-lg transition duration-150 text-center"
+                  >
+                    Apply Now
+                  </button>
+                </div>
+              ))}
             </div>
           )}
         </section>
@@ -461,9 +460,6 @@ const handleApplyNow = async (postedByUserId) => {
             ))}
           </div>
         </section>
-
-  
-  
 
         {/* MODERN LOGIN MODAL */}
         {showAuthModal && (
