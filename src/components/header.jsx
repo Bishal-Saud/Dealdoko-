@@ -28,7 +28,7 @@ import { Link, useNavigate } from "react-router-dom";
 
 import LiveChatModel from "../model/LiveChatModel.jsx";
 
-import { Helmet } from "react-helmet-async";
+
 
 function Header() {
   const [isAuthOpen, setIsAuthOpen] = useState(false);

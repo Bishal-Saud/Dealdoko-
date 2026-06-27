@@ -124,7 +124,7 @@ function ImportantQuestions() {
 
       </div>
 
-      {/* Payment Security Warning Banner */}
+  
       <div className="max-w-3xl mx-auto mt-12 p-4 bg-blue-600 border border-slate-800 rounded-xl text-center shadow-xs">
         <p className="text-xs text-slate-300 font-medium leading-relaxed flex items-center justify-center gap-1.5 flex-wrap">
           <ShieldCheck size={14} className="text-blue-400 shrink-0" /> 

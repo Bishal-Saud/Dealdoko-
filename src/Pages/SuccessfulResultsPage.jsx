@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../api/supabase.js';
-import { CheckCircle2, Phone, Sparkles, GraduationCap, Calendar, ArrowRight, TrendingUp, DollarSign,X } from 'lucide-react';
+import { CheckCircle2, Phone, Sparkles, GraduationCap, Calendar, ArrowRight, TrendingUp, X , IndianRupeeIcon } from 'lucide-react';
 import toast from 'react-hot-toast';
 import HomeLayout from '../Layouts/HomeLayout.jsx';
 import Carousel from '../components/Carousel.jsx';
@@ -188,7 +188,7 @@ const [isComparisonVisible, setIsComparisonVisible] = useState(true);
               </div>
               <div className="bg-white border border-slate-200 p-5 rounded-2xl flex items-center gap-4 shadow-2xs">
                 <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
-                  <DollarSign size={20} />
+                  <IndianRupeeIcon size={20} />
                 </div>
                 <div>
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Monthly Board Volume</p>
